@@ -38,7 +38,8 @@ namespace Bubbles
             drawer.AddLight(new Light(Light.light_type.POINT, 0.6, new Vector3D(2, 1, 0)));
             drawer.AddLight(new Light(Light.light_type.DIRECTIONAL, 0.2, new Vector3D(1, 4, 4)));
 
-            drawer.Render();
+            drawer.MeasureTime();
+            //drawer.Render();
             Canvas.Invalidate();
         }
 
@@ -74,7 +75,7 @@ namespace Bubbles
                 MessageBox.Show("Problem with xlh. The value should be integer");
                 return;
             }
-            drawer.AddSphere(new Sphere(new Vector3D(ox, oy, oz), r, System.Drawing.Color.Red, 500, 0.2));
+            drawer.AddSphere(new Sphere(new Vector3D(ox, oy, oz), r, ColorButton.BackColor, 500, 0.2));
             drawer.Render();
             Canvas.Invalidate();
         }
@@ -87,6 +88,9 @@ namespace Bubbles
         private void ClearSceneButton_Click(object sender, EventArgs e)
         {
             drawer = new Renderer(1, 1, new Vector3D(0, 0, 0), 3, Canvas.Width, Canvas.Height);
+            drawer.AddLight(new Light(Light.light_type.AMBIENT, 0.2, new Vector3D(0, 0, 0)));
+            drawer.AddLight(new Light(Light.light_type.POINT, 0.6, new Vector3D(2, 1, 0)));
+            drawer.AddLight(new Light(Light.light_type.DIRECTIONAL, 0.2, new Vector3D(1, 4, 4)));
             Canvas.Image = drawer.Canvas_Buffer;
 
             ColorButton.BackColor = System.Drawing.Color.Magenta;
