@@ -16,15 +16,19 @@ namespace Bubbles
         double radius;     // радиус
         Color color;       // цвет
         int specular;  
-        double reflective; 
+        double reflective;
+        public double Transparency { get; set; }
+        public double RefractiveIndex { get; set; }
 
-        public Sphere(Vector3D center, double radius, Color color, int specular, double reflective)
+        public Sphere(Vector3D center, double radius, Color color, int specular, double reflective, double transparency, double refractiveIndex)
         {
             Center = center;
             this.radius = radius;
             this.color = color;
             this.specular = specular;
             this.reflective = reflective;
+            Transparency = transparency;
+            RefractiveIndex = refractiveIndex;
         }
         public Vector3D Center { get => center; set => center = value; }
         public double Radius { get => radius; set => radius = value; }

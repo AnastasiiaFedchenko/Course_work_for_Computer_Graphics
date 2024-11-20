@@ -1,0 +1,11 @@
+D:\bmstu\Курсовая по КГ\Course_work_for_Computer_Graphics\project\Bubbles\Bubbles\obj\Debug\Bubbles.csproj.AssemblyReference.cache
+D:\bmstu\Курсовая по КГ\Course_work_for_Computer_Graphics\project\Bubbles\Bubbles\obj\Debug\Bubbles.csproj.SuggestedBindingRedirects.cache
+D:\bmstu\Курсовая по КГ\Course_work_for_Computer_Graphics\project\Bubbles\Bubbles\obj\Debug\Bubbles.Form1.resources
+D:\bmstu\Курсовая по КГ\Course_work_for_Computer_Graphics\project\Bubbles\Bubbles\obj\Debug\Bubbles.Properties.Resources.resources
+D:\bmstu\Курсовая по КГ\Course_work_for_Computer_Graphics\project\Bubbles\Bubbles\obj\Debug\Bubbles.csproj.GenerateResource.cache
+D:\bmstu\Курсовая по КГ\Course_work_for_Computer_Graphics\project\Bubbles\Bubbles\obj\Debug\Bubbles.csproj.CoreCompileInputs.cache
+D:\bmstu\Курсовая по КГ\Course_work_for_Computer_Graphics\project\Bubbles\Bubbles\bin\Debug\Bubbles.exe.config
+D:\bmstu\Курсовая по КГ\Course_work_for_Computer_Graphics\project\Bubbles\Bubbles\bin\Debug\Bubbles.exe
+D:\bmstu\Курсовая по КГ\Course_work_for_Computer_Graphics\project\Bubbles\Bubbles\bin\Debug\Bubbles.pdb
+D:\bmstu\Курсовая по КГ\Course_work_for_Computer_Graphics\project\Bubbles\Bubbles\obj\Debug\Bubbles.exe
+D:\bmstu\Курсовая по КГ\Course_work_for_Computer_Graphics\project\Bubbles\Bubbles\obj\Debug\Bubbles.pdb

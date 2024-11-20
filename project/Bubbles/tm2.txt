@@ -1,3 +1,15 @@
+0
+1 RunTime 9,75
+2 RunTime 9,57
+3 RunTime 10,11
+4 RunTime 10,78
+5 RunTime 10,75
+6 RunTime 17,24
+7 RunTime 11,85
+8 RunTime 9,23
+9 RunTime 9,05
+0 RunTime 9,08
+ResTime 10,741
 2
 1 RunTime 6,44
 2 RunTime 5,83

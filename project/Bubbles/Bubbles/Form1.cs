@@ -10,7 +10,7 @@ using System.Windows;
 using System.Windows.Forms;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
-using static System.Collections.Specialized.BitVector32;
+//using static System.Collections.Specialized.BitVector32;
 
 namespace Bubbles
 {
@@ -22,25 +22,30 @@ namespace Bubbles
         public Form1()
         {
             InitializeComponent();
-            drawer = new Renderer(1, 1, new Vector3D(0, 0, 0), 3, Canvas.Width, Canvas.Height);
+            drawer = new Renderer(4, 1, new Vector3D(0, 0, 0), 2, Canvas.Width, Canvas.Height);
             
             Canvas.Image = drawer.Canvas_Buffer;
         }
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            drawer.AddSphere(new Sphere(new Vector3D(0, -1, 3), 1, System.Drawing.Color.Red, 500, 0.2));
-            drawer.AddSphere(new Sphere(new Vector3D(-2, 0, 4), 1, System.Drawing.Color.Green, 10, 0.4));
-            drawer.AddSphere(new Sphere(new Vector3D(2, 0, 4), 1, System.Drawing.Color.Blue, 500, 0.3));
-            drawer.AddSphere(new Sphere(new Vector3D(0, -5001, 0), 5000, System.Drawing.Color.Yellow, 1000, 0.5));
+            drawer.AddSphere(new Sphere(new Vector3D(0, -1, 3), 2, System.Drawing.Color.Orange, 32, 0.1, 0.7, 1)); // Полупрозрачный оранжевый
+            drawer.AddSphere(new Sphere(new Vector3D(-1, -1, 3), 2, System.Drawing.Color.Black, 32, 0.1, 0.7, 1)); // Полупрозрачный красный
+            drawer.AddSphere(new Sphere(new Vector3D(1, -1, 3), 2, System.Drawing.Color.Red, 32, 0.1, 0.7, 1)); // Полупрозрачный красный
+            //drawer.AddSphere(new Sphere(new Vector3D(0, -1, 3), 2, System.Drawing.Color.FromArgb(128, 255, 165, 0), 80, 0.7));
+            //drawer.AddSphere(new Sphere(new Vector3D(0, -1, 3), 1.8, System.Drawing.Color.Yellow, 80, 0.7)); // Внутренняя стенка
+            //drawer.AddSphere(new Sphere(new Vector3D(-1, -1, 3), 2, System.Drawing.Color.FromArgb(128, 255, 0, 0), 80, 0.7));
+            //drawer.AddSphere(new Sphere(new Vector3D(-2, 0, 4), 1, System.Drawing.Color.Purple, 10, 0.1));
+            //drawer.AddSphere(new Sphere(new Vector3D(2, 0, 4), 1, System.Drawing.Color.Blue, 500, 0.3));
+            //drawer.AddSphere(new Sphere(new Vector3D(0, -5001, 0), 5000, System.Drawing.Color.Yellow, 1000, 0.5));
 
-            drawer.AddLight(new Light(Light.light_type.AMBIENT, 0.2, new Vector3D(0, 0, 0)));
-            drawer.AddLight(new Light(Light.light_type.POINT, 0.6, new Vector3D(2, 1, 0)));
-            drawer.AddLight(new Light(Light.light_type.DIRECTIONAL, 0.2, new Vector3D(1, 4, 4)));
+            drawer.AddLight(new Light(Light.light_type.AMBIENT, 0.1, new Vector3D(0, 0, 0)));
+            drawer.AddLight(new Light(Light.light_type.POINT, 0.8, new Vector3D(2, 1, 0)));
+            drawer.AddLight(new Light(Light.light_type.DIRECTIONAL, 0.4, new Vector3D(1, 4, 4)));
 
-            drawer.MeasureTime();
-            //drawer.Render();
+            drawer.Render();
             Canvas.Invalidate();
+            
         }
 
         private void ColorButton_Click(object sender, EventArgs e)
@@ -57,25 +62,25 @@ namespace Bubbles
             double r;
             if (double.TryParse(OxTextBox.Text, out ox) == false)
             {
-                MessageBox.Show("Problem with xlh. The value should be integer");
+                MessageBox.Show("Ox координата центра пузыря должна быть числом с плавающей точкой.");
                 return;
             }
             if (double.TryParse(OyTextBox.Text, out oy) == false)
             {
-                MessageBox.Show("Problem with xlh. The value should be integer");
+                MessageBox.Show("Oy координата центра пузыря должна быть числом с плавающей точкой.");
                 return;
             }
             if (double.TryParse(OzTextBox.Text, out oz) == false)
             {
-                MessageBox.Show("Problem with xlh. The value should be integer");
+                MessageBox.Show("Oz координата центра пузыря должна быть числом с плавающей точкой.");
                 return;
             }
             if (double.TryParse(RTextBox.Text, out r) == false)
             {
-                MessageBox.Show("Problem with xlh. The value should be integer");
+                MessageBox.Show("Радиус пузыря должен быть числом с плавающей точкой.");
                 return;
             }
-            drawer.AddSphere(new Sphere(new Vector3D(ox, oy, oz), r, ColorButton.BackColor, 500, 0.2));
+            drawer.AddSphere(new Sphere(new Vector3D(ox, oy, oz), r, ColorButton.BackColor, 500, 0.5, 0.7, 1.5));
             drawer.Render();
             Canvas.Invalidate();
         }
@@ -104,6 +109,13 @@ namespace Bubbles
             Canvas.Invalidate();
         }
         private double dot(Vector3D a, Vector3D b) { return (double)(a.X * b.X + a.Y * b.Y + a.Z * b.Z); }
+
+        private void trackBar1_Scroll(object sender, EventArgs e)
+        {
+            drawer.ViewportSize = trackBar1.Value;
+            drawer.Render();
+            Canvas.Invalidate();
+        }
     }
     
 
