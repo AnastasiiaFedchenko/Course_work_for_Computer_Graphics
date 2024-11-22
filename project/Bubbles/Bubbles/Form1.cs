@@ -29,10 +29,13 @@ namespace Bubbles
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            drawer.AddSphere(new Sphere(new Vector3D(0, -1, 3), 2, System.Drawing.Color.Orange, 32, 0.1, 0.7, 1)); // Полупрозрачный оранжевый
-            drawer.AddSphere(new Sphere(new Vector3D(-1, -1, 3), 2, System.Drawing.Color.Black, 32, 0.1, 0.7, 1)); // Полупрозрачный красный
-            drawer.AddSphere(new Sphere(new Vector3D(1, -1, 3), 2, System.Drawing.Color.Red, 32, 0.1, 0.7, 1)); // Полупрозрачный красный
-            //drawer.AddSphere(new Sphere(new Vector3D(0, -1, 3), 2, System.Drawing.Color.FromArgb(128, 255, 165, 0), 80, 0.7));
+            drawer.AddSphere(new Bubble(new Vector3D(0, 0, 0), 2, System.Drawing.Color.Orange, 32, 0.1, 0.7, 1));
+            //drawer.AddSphere(new SphericalSegment(new Vector3D(0, 0, 3), 2, 2, new Vector3D(-1, 1, 0), System.Drawing.Color.Orange, 32, 0.1, 0.7, 1)); // Полная сфера
+            //drawer.AddSphere(new SphericalSegment(new Vector3D(0, 0, 3), 2, 0.75, new Vector3D(1, -1, 0), System.Drawing.Color.Orange, 32, 0.1, 0.7, 1)); // Полная сфера
+            //drawer.AddSphere(new SphericalSegment(new Vector3D(0, -1, 3), 2, 2.5, new Vector3D(1, 1, 0), System.Drawing.Color.Orange, 32, 0.1, 0.7, 1)); // Полупрозрачный оранжевый
+            /*drawer.AddSphere(new SphericalSegment(new Vector3D(-1, -1, 3), 2, 1.0, new Vector3D(0, 1, 0), System.Drawing.Color.Black, 32, 0.1, 0.7, 1)); // Полупрозрачный черный
+            drawer.AddSphere(new SphericalSegment(new Vector3D(1, -1, 3), 2, 1.0, new Vector3D(0, 1, 0), System.Drawing.Color.Red, 32, 0.1, 0.7, 1)); // Полупрозрачный красный
+            *///drawer.AddSphere(new Sphere(new Vector3D(0, -1, 3), 2, System.Drawing.Color.FromArgb(128, 255, 165, 0), 80, 0.7));
             //drawer.AddSphere(new Sphere(new Vector3D(0, -1, 3), 1.8, System.Drawing.Color.Yellow, 80, 0.7)); // Внутренняя стенка
             //drawer.AddSphere(new Sphere(new Vector3D(-1, -1, 3), 2, System.Drawing.Color.FromArgb(128, 255, 0, 0), 80, 0.7));
             //drawer.AddSphere(new Sphere(new Vector3D(-2, 0, 4), 1, System.Drawing.Color.Purple, 10, 0.1));
@@ -80,7 +83,7 @@ namespace Bubbles
                 MessageBox.Show("Радиус пузыря должен быть числом с плавающей точкой.");
                 return;
             }
-            drawer.AddSphere(new Sphere(new Vector3D(ox, oy, oz), r, ColorButton.BackColor, 500, 0.5, 0.7, 1.5));
+            //drawer.AddSphere(new SphericalSegment(new Vector3D(ox, oy, oz), r, ColorButton.BackColor, 500, 0.5, 0.7, 1.5));
             drawer.Render();
             Canvas.Invalidate();
         }

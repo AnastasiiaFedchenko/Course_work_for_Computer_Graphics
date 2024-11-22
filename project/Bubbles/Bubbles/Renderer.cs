@@ -11,6 +11,7 @@ using System.Windows.Media;
 using System.Windows.Media.Media3D;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
+using static Bubbles.Bubble;
 
 namespace Bubbles
 {
@@ -77,7 +78,7 @@ namespace Bubbles
         int viewport_size;
         int d;
         Vector3D camera_position;
-        List<Sphere> spheres;
+        List<Bubble> spheres;
         List<Light> lights;
         int recursion_depth;
 
@@ -93,7 +94,7 @@ namespace Bubbles
             this.viewport_size = viewport_size;
             this.d = d;
             this.camera_position = camera_position;
-            spheres = new List<Sphere>();
+            spheres = new List<Bubble>();
             lights = new List<Light>();
             this.recursion_depth = recursive_depth;
 
@@ -105,7 +106,7 @@ namespace Bubbles
         }
         public Bitmap Canvas_Buffer { get { return canvas_buffer; } }
         public void AddLight(Light l) { lights.Add(l); }
-        public void AddSphere(Sphere s) { spheres.Add(s); }
+        public void AddSphere(Bubble s) { spheres.Add(s); }
 
         public int ViewportSize { get { return viewport_size; }  set { viewport_size = value; } }
 
@@ -132,12 +133,12 @@ namespace Bubbles
             }
         }
 
-        Vector3D ReflectRay(Vector3D a, Vector3D b) { return b * (2 * dot(a, b)) - a; }
+        Vector3D ReflectRay(Vector3D a, Vector3D b) { return b * (2 * Vector3D.DotProduct(a, b)) - a; }
         Vector3D RefractRay(Vector3D direction, Vector3D normal, double refractiveIndex)
         {
             double n1 = 1.0; // Показатель преломления воздуха
             double n2 = refractiveIndex; // Показатель преломления материала
-            double cosI = -dot(normal, direction);
+            double cosI = -Vector3D.DotProduct(normal, direction);
 
             // Вычисление синуса угла преломления
             double sin2T = (n1 / n2) * (n1 / n2) * (1 - cosI * cosI);
@@ -150,7 +151,6 @@ namespace Bubbles
             // Используем формулу для расчета преломленного луча
             return (direction * (n1 / n2)) + (normal * (n1 / n2 * cosI - cosT));
         }
-        double dot(Vector3D a, Vector3D b) { return (double)(a.X * b.X + a.Y * b.Y + a.Z * b.Z); }
 
         public delegate System.Drawing.Color ThreadTraceRay(Vector3D origin, Vector3D direction, double min_t, double max_t, int depth);
         System.Drawing.Color TraceRay(Object obj)
@@ -161,70 +161,70 @@ namespace Bubbles
                 {
                     return background_color; // Возвращаем фон, если достигли максимальной глубины рекурсии
                 }
-                List<KeyValuePair<Sphere, double>> intersection = ClosestIntersection(args.origin, args.direction, args.min_t, args.max_t);
+                List<KeyValuePair<Bubble, double>> intersection = ClosestIntersection(args.origin, args.direction, args.min_t, args.max_t);
                 if (intersection[0].Key == null)
                     return background_color;
 
-                Sphere closest_sphere = intersection[0].Key;
+                Bubble closest = intersection[0].Key;
                 double closest_t = intersection[0].Value;
 
                 // Проверка на наличие второй сферы
-                Sphere closest_sphere2 = intersection.Count > 1 ? intersection[1].Key : null;
+                Bubble closest2 = intersection.Count > 1 ? intersection[1].Key : null;
                 double closest_t2 = intersection.Count > 1 ? intersection[1].Value : double.MaxValue;
 
                 Vector3D point = args.origin + args.direction * closest_t;
-                Vector3D normal = point - closest_sphere.Center;
+                Vector3D normal = point - closest.Center;
                 normal = normal * (1.0 / normal.Length);
 
                 Vector3D view = args.direction * (-1);
-                double lighting = ComputeLighting(point, normal, view, closest_sphere.Specular);
-                System.Drawing.Color local_color = closest_sphere.Color_mul(lighting);
+                double lighting = ComputeLighting(point, normal, view, closest.Specular);
+                System.Drawing.Color local_color = closest.Color_mul(lighting);
 
                 // Обработка отражения
                 System.Drawing.Color reflected_color = System.Drawing.Color.Black;
-                if (closest_sphere.Reflective > 0)
+                if (closest.Reflective > 0)
                 {
                     Vector3D reflected_ray = ReflectRay(view, normal);
                     reflected_color = TraceRay(new TraceRayArgs(args.x, args.y, point, reflected_ray, EPSILON,
                                                                 double.PositiveInfinity, args.depth - 1));
                     reflected_color = System.Drawing.Color.FromArgb(
-                        (int)(reflected_color.A * closest_sphere.Reflective),
-                        (int)(reflected_color.R * closest_sphere.Reflective),
-                        (int)(reflected_color.G * closest_sphere.Reflective),
-                        (int)(reflected_color.B * closest_sphere.Reflective)
+                        (int)(reflected_color.A * closest.Reflective),
+                        (int)(reflected_color.R * closest.Reflective),
+                        (int)(reflected_color.G * closest.Reflective),
+                        (int)(reflected_color.B * closest.Reflective)
                     );
                 }
 
                 // Обработка преломления
                 System.Drawing.Color refracted_color = System.Drawing.Color.Black;
-                if (closest_sphere.Transparency > 0)
+                if (closest.Transparency > 0)
                 {
-                    Vector3D refracted_ray = RefractRay(view, normal, closest_sphere.RefractiveIndex);
+                    Vector3D refracted_ray = RefractRay(view, normal, closest.RefractiveIndex);
                     refracted_color = TraceRay(new TraceRayArgs(args.x, args.y, point, refracted_ray, EPSILON,
                                                                 double.PositiveInfinity, args.depth - 1));
                     refracted_color = System.Drawing.Color.FromArgb(
-                        (int)(refracted_color.A * closest_sphere.Transparency),
-                        (int)(refracted_color.R * closest_sphere.Transparency),
-                        (int)(refracted_color.G * closest_sphere.Transparency),
-                        (int)(refracted_color.B * closest_sphere.Transparency)
+                        (int)(refracted_color.A * closest.Transparency),
+                        (int)(refracted_color.R * closest.Transparency),
+                        (int)(refracted_color.G * closest.Transparency),
+                        (int)(refracted_color.B * closest.Transparency)
                     );
                 }
 
                 // Учитываем цвет второй сферы, если она существует и находится "за" первой
                 System.Drawing.Color second_sphere_color = System.Drawing.Color.Black;
-                if (closest_sphere2 != null && closest_t2 < double.MaxValue)
+                if (closest2 != null && closest_t2 < double.MaxValue)
                 {
                     // Вычисляем цвет второй сферы
                     Vector3D point2 = args.origin + args.direction * closest_t2;
-                    Vector3D normal2 = point2 - closest_sphere2.Center;
+                    Vector3D normal2 = point2 - closest2.Center;
                     normal2 = normal2 * (1.0 / normal2.Length);
-                    double lighting2 = ComputeLighting(point2, normal2, view, closest_sphere2.Specular);
-                    second_sphere_color = closest_sphere2.Color_mul(lighting2);
+                    double lighting2 = ComputeLighting(point2, normal2, view, closest2.Specular);
+                    second_sphere_color = closest2.Color_mul(lighting2);
                     second_sphere_color = System.Drawing.Color.FromArgb(
-                        (int)(second_sphere_color.A * closest_sphere2.Transparency),
-                        (int)(second_sphere_color.R * closest_sphere2.Transparency),
-                        (int)(second_sphere_color.G * closest_sphere2.Transparency),
-                        (int)(second_sphere_color.B * closest_sphere2.Transparency)
+                        (int)(second_sphere_color.A * closest2.Transparency),
+                        (int)(second_sphere_color.R * closest2.Transparency),
+                        (int)(second_sphere_color.G * closest2.Transparency),
+                        (int)(second_sphere_color.B * closest2.Transparency)
                     );
                 }
                 // Смешивание цветов
@@ -325,14 +325,14 @@ namespace Bubbles
                 }
 
                 // Shadow check.
-                KeyValuePair<Sphere, double> blocker = ClosestIntersection(point, vec_l, EPSILON, t_max)[0];
+                KeyValuePair<Bubble, double> blocker = ClosestIntersection(point, vec_l, EPSILON, t_max)[0];
                 if (blocker.Key != null)
                 {
                     continue;
                 }
 
                 // Diffuse reflection.
-                double n_dot_l = dot(normal, vec_l);
+                double n_dot_l = Vector3D.DotProduct(normal, vec_l);
                 if (n_dot_l > 0)
                 {
                     intensity += light.Intensity * n_dot_l / (length_n * vec_l.Length);
@@ -342,7 +342,7 @@ namespace Bubbles
                 if (specular != -1)
                 {
                     Vector3D vec_r = (normal * 2.0 * n_dot_l) - vec_l;
-                    double r_dot_v = dot(vec_r, view);
+                    double r_dot_v = Vector3D.DotProduct(vec_r, view);
                     if (r_dot_v > 0)
                     {
                         intensity += light.Intensity * Math.Pow(r_dot_v / (vec_r.Length * length_v), specular);
@@ -353,46 +353,94 @@ namespace Bubbles
             return intensity;
         }
 
-        List<double> IntersectRaySphere(Vector3D origin, Vector3D direction, Sphere sphere)
+        public List<double> IntersectRaySphericalSegment(Vector3D origin, Vector3D direction, Bubble bubble)
         {
-            Vector3D oc = origin - sphere.Center;
+            Vector3D oc = origin - bubble.Center;
 
-            double k1 = dot(direction, direction);
-            double k2 = 2 * dot(oc, direction);
-            double k3 = dot(oc, oc) - sphere.Radius * sphere.Radius;
+            double k1 = Vector3D.DotProduct(direction, direction);
+            double k2 = 2.0 * Vector3D.DotProduct(oc, direction);
+            double k3 = Vector3D.DotProduct(oc, oc) - bubble.Radius * bubble.Radius;
 
             double discriminant = k2 * k2 - 4 * k1 * k3;
 
             List<double> res = new List<double>();
             if (discriminant < 0)
             {
+                // Нет пересечения
                 res.Add(double.PositiveInfinity);
                 res.Add(double.PositiveInfinity);
             }
             else
             {
+                // Есть пересечение, находим точки пересечения
                 double t1 = (-k2 + Math.Sqrt(discriminant)) / (2 * k1);
                 double t2 = (-k2 - Math.Sqrt(discriminant)) / (2 * k1);
                 res.Add(t1);
                 res.Add(t2);
+
+                // Проверяем, попадают ли точки пересечения в высоту сегмента
+                Vector3D intersectionPoint1 = origin + direction * t1;
+                Vector3D intersectionPoint2 = origin + direction * t2;
+
+                // Проверка по высоте сегмента
+                if (!bubble.IsWithinBubble(intersectionPoint1))
+                    res[0] = double.PositiveInfinity; // Убираем первую точку пересечения
+
+                if (!bubble.IsWithinBubble(intersectionPoint2))
+                    res[1] = double.PositiveInfinity; // Убираем вторую точку пересечения
+            }
+
+            // Проверка пересечения с Circle3D
+            List<double> circleIntersections = IntersectRayCircle3D(origin, direction, bubble);
+            res.AddRange(circleIntersections);
+
+            return res;
+        }
+
+        private List<double> IntersectRayCircle3D(Vector3D origin, Vector3D direction, Bubble bubble)
+        {
+            List<double> res = new List<double>();
+
+            // Убедимся, что круг имеет нормаль
+            Vector3D normal = bubble.MembraneNormal;
+
+            // Проверяем, не параллелен ли луч плоскости круга
+            double denom = Vector3D.DotProduct(normal, direction);
+            if (Math.Abs(denom) > 1e-6) // Если не параллелен
+            {
+                // Находим t, при котором луч пересекает плоскость круга
+                Vector3D oc = origin - bubble.MembraneCenter;
+                double t = -Vector3D.DotProduct(oc, normal) / denom;
+
+                if (t >= 0) // Пересечение впереди
+                {
+                    Vector3D intersectionPoint = origin + direction * t;
+
+                    // Проверяем, находится ли точка пересечения внутри круга
+                    Vector3D circleToIntersection = intersectionPoint - bubble.MembraneCenter;
+                    if (circleToIntersection.LengthSquared <= bubble.MembraneRadius * bubble.MembraneRadius)
+                    {
+                        res.Add(t); // Добавляем точку пересечения
+                    }
+                }
             }
 
             return res;
         }
 
 
-        List<KeyValuePair<Sphere, double>> ClosestIntersection(Vector3D origin, Vector3D direction,
+        List<KeyValuePair<Bubble, double>> ClosestIntersection(Vector3D origin, Vector3D direction,
                                                  double min_t, double max_t)
         {
             double closest_t = double.PositiveInfinity;
-            Sphere closest_sphere = null;
+            Bubble closest = null;
 
             double closest_t2 = double.PositiveInfinity;
-            Sphere closest_sphere2 = null;
+            Bubble closest2 = null;
 
             for (int i = 0; i < spheres.Count; i++)
             {
-                List<double> ts = IntersectRaySphere(origin, direction, spheres[i]);
+                List<double> ts = IntersectRaySphericalSegment(origin, direction, spheres[i]);
 
                 // Проверка пересечений
                 foreach (double t in ts)
@@ -403,23 +451,23 @@ namespace Bubbles
                         {
                             // Обновляем ближайшую сферу
                             closest_t2 = closest_t; // Сохраняем предыдущее ближайшее
-                            closest_sphere2 = closest_sphere; // Сохраняем предыдущее ближайшее
+                            closest2 = closest; // Сохраняем предыдущее ближайшее
                             closest_t = t;
-                            closest_sphere = spheres[i];
+                            closest = spheres[i];
                         }
                         else if (t < closest_t2)
                         {
                             // Обновляем вторую ближайшую сферу
                             closest_t2 = t;
-                            closest_sphere2 = spheres[i];
+                            closest2 = spheres[i];
                         }
                     }
                 }
             }
 
-            List<KeyValuePair<Sphere, double>> res = new List<KeyValuePair<Sphere, double>>();
-            res.Add(new KeyValuePair<Sphere, double>(closest_sphere, closest_t));
-            res.Add(new KeyValuePair<Sphere, double>(closest_sphere2, closest_t2));
+            List<KeyValuePair<Bubble, double>> res = new List<KeyValuePair<Bubble, double>>();
+            res.Add(new KeyValuePair<Bubble, double>(closest, closest_t));
+            res.Add(new KeyValuePair<Bubble, double>(closest2, closest_t2));
             return res;
         }
     }
