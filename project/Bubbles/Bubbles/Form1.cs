@@ -22,14 +22,25 @@ namespace Bubbles
         public Form1()
         {
             InitializeComponent();
-            drawer = new Renderer(4, 1, new Vector3D(0, 0, 0), 2, Canvas.Width, Canvas.Height);
+            drawer = new Renderer(16, 1, new Vector3D(0, 0, 0), 1, Canvas.Width, Canvas.Height);
             
             Canvas.Image = drawer.Canvas_Buffer;
         }
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            drawer.AddSphere(new Bubble(new Vector3D(0, 0, 0), 2, System.Drawing.Color.Orange, 32, 0.1, 0.7, 1));
+            /*drawer.AddSphere(new Bubble(new Vector3D(0, 0, 0), 2, System.Drawing.Color.Orange, 32, 0.1, 0.7, 1));
+            drawer.AddSphere(new Bubble(new Vector3D(0, 1, 0), 2, System.Drawing.Color.Red, 32, 0.1, 0.7, 1));*/
+            Bubble bubble1 = new Bubble(new Vector3D(0, 0, 0), 2, System.Drawing.Color.Orange, 32, 0.1, 0.7, 1);
+            Bubble bubble2 = new Bubble(new Vector3D(0, 2, 0), 2, System.Drawing.Color.Red, 32, 0.1, 0.7, 1);
+
+            CombinedBubble combinedBubble = new CombinedBubble(bubble1, bubble2);
+
+            drawer.AddSphere(combinedBubble.Bubble1);
+            if (combinedBubble.Bubble2 != null)
+                drawer.AddSphere(combinedBubble.Bubble2);
+
+
             //drawer.AddSphere(new SphericalSegment(new Vector3D(0, 0, 3), 2, 2, new Vector3D(-1, 1, 0), System.Drawing.Color.Orange, 32, 0.1, 0.7, 1)); // Полная сфера
             //drawer.AddSphere(new SphericalSegment(new Vector3D(0, 0, 3), 2, 0.75, new Vector3D(1, -1, 0), System.Drawing.Color.Orange, 32, 0.1, 0.7, 1)); // Полная сфера
             //drawer.AddSphere(new SphericalSegment(new Vector3D(0, -1, 3), 2, 2.5, new Vector3D(1, 1, 0), System.Drawing.Color.Orange, 32, 0.1, 0.7, 1)); // Полупрозрачный оранжевый
