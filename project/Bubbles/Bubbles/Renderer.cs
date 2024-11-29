@@ -84,7 +84,7 @@ namespace Bubbles
 
         Bitmap canvas_buffer;
         Graphics g;
-        System.Drawing.Color background_color = System.Drawing.Color.FromArgb(255, 220, 240, 255);
+        System.Drawing.Color background_color = System.Drawing.Color.FromArgb(255, 220, 240, 255); //Black;
 
         private readonly object locker;
         private readonly object log_locker;
@@ -157,45 +157,42 @@ namespace Bubbles
         {
             if (obj is TraceRayArgs args)
             {
-                if (args.depth <= 0)
-                {
-                    return background_color; // Возвращаем фон, если достигли максимальной глубины рекурсии
-                }
-                List<KeyValuePair<Bubble, double>> intersection = ClosestIntersection(args.origin, args.direction, args.min_t, args.max_t);
-                if (intersection[0].Key == null)
+                KeyValuePair<Bubble, double> intersection = ClosestIntersection(args.origin, args.direction, args.min_t, args.max_t);
+                if (intersection.Key == null)
                     return background_color;
 
-                Bubble closest = intersection[0].Key;
-                double closest_t = intersection[0].Value;
-
-                // Проверка на наличие второй сферы
-                Bubble closest2 = intersection.Count > 1 ? intersection[1].Key : null;
-                double closest_t2 = intersection.Count > 1 ? intersection[1].Value : double.MaxValue;
+                Bubble closest = intersection.Key;
+                double closest_t = intersection.Value;
 
                 Vector3D point = args.origin + args.direction * closest_t;
                 Vector3D normal = point - closest.Center;
-                normal = normal * (1.0 / normal.Length);
+                normal.Normalize();
 
                 Vector3D view = args.direction * (-1);
                 double lighting = ComputeLighting(point, normal, view, closest.Specular);
                 System.Drawing.Color local_color = closest.Color_mul(lighting);
 
-                // Обработка отражения
-                System.Drawing.Color reflected_color = System.Drawing.Color.Black;
-                if (closest.Reflective > 0)
-                {
-                    Vector3D reflected_ray = ReflectRay(view, normal);
-                    reflected_color = TraceRay(new TraceRayArgs(args.x, args.y, point, reflected_ray, EPSILON,
-                                                                double.PositiveInfinity, args.depth - 1));
-                    reflected_color = System.Drawing.Color.FromArgb(
-                        (int)(reflected_color.A * closest.Reflective),
-                        (int)(reflected_color.R * closest.Reflective),
-                        (int)(reflected_color.G * closest.Reflective),
-                        (int)(reflected_color.B * closest.Reflective)
-                    );
-                }
+                if (closest.Reflective <= 0 || args.depth <= 0)
+                    return local_color;
 
-                // Обработка преломления
+                double koef = 1 - closest.Reflective;
+                System.Drawing.Color local_contribution = System.Drawing.Color.FromArgb(
+                        (int)(local_color.R * koef),
+                        (int)(local_color.G * koef),
+                        (int)(local_color.B * koef)
+                    );
+
+                // Обработка отражения
+                Vector3D reflected_ray = ReflectRay(view, normal);
+                System.Drawing.Color reflected_color = TraceRay(new TraceRayArgs(args.x, args.y, point, reflected_ray, EPSILON,
+                                                            double.PositiveInfinity, args.depth - 1));
+                System.Drawing.Color reflected_contribution = System.Drawing.Color.FromArgb(
+                    (int)(reflected_color.R * closest.Reflective),
+                    (int)(reflected_color.G * closest.Reflective),
+                    (int)(reflected_color.B * closest.Reflective)
+                );
+
+                /*// Обработка преломления
                 System.Drawing.Color refracted_color = System.Drawing.Color.Black;
                 if (closest.Transparency > 0)
                 {
@@ -210,31 +207,19 @@ namespace Bubbles
                     );
                 }
 
-                // Учитываем цвет второй сферы, если она существует и находится "за" первой
-                System.Drawing.Color second_sphere_color = System.Drawing.Color.Black;
-                if (closest2 != null && closest_t2 < double.MaxValue)
-                {
-                    // Вычисляем цвет второй сферы
-                    Vector3D point2 = args.origin + args.direction * closest_t2;
-                    Vector3D normal2 = point2 - closest2.Center;
-                    normal2 = normal2 * (1.0 / normal2.Length);
-                    double lighting2 = ComputeLighting(point2, normal2, view, closest2.Specular);
-                    second_sphere_color = closest2.Color_mul(lighting2);
-                    second_sphere_color = System.Drawing.Color.FromArgb(
-                        (int)(second_sphere_color.A * closest2.Transparency),
-                        (int)(second_sphere_color.R * closest2.Transparency),
-                        (int)(second_sphere_color.G * closest2.Transparency),
-                        (int)(second_sphere_color.B * closest2.Transparency)
-                    );
-                }
                 // Смешивание цветов
                 System.Drawing.Color result_color = System.Drawing.Color.FromArgb(
-                    Math.Min(255, local_color.A + reflected_color.A + refracted_color.A + second_sphere_color.A),
-                    Math.Min(255, local_color.R + reflected_color.R + refracted_color.R + second_sphere_color.R),
-                    Math.Min(255, local_color.G + reflected_color.G + refracted_color.G + second_sphere_color.G),
-                    Math.Min(255, local_color.B + reflected_color.B + refracted_color.B + second_sphere_color.B)
-                );
+                    Math.Min(255, local_color.A + reflected_color.A + refracted_color.A),
+                    Math.Min(255, local_color.R + reflected_color.R + refracted_color.R),
+                    Math.Min(255, local_color.G + reflected_color.G + refracted_color.G),
+                    Math.Min(255, local_color.B + reflected_color.B + refracted_color.B)
+                );*/
 
+                System.Drawing.Color result_color = System.Drawing.Color.FromArgb(
+                    Math.Min(255, local_contribution.R + reflected_contribution.R),
+                    Math.Min(255, local_contribution.G + reflected_contribution.G),
+                    Math.Min(255, local_contribution.B + reflected_contribution.B)
+                );
                 // Возвращаем окончательный цвет
                 return result_color;
             }
@@ -243,48 +228,16 @@ namespace Bubbles
 
         void PutPixel(int x, int y, System.Drawing.Color color, /*ref Mutex mut, ref Mutex mutlog,*/ bool dolog)
         {
-            int W, H;
 
-            lock (locker)
-            {
-                W = canvas_buffer.Width;
-                H = canvas_buffer.Height;
-            }
+            int W = canvas_buffer.Width;
+            int H = canvas_buffer.Height;
 
             x = W / 2 + x;
             y = H / 2 - y - 1;
 
             if (x < 0 || x >= W || y < 0 || y >= H)
-            {
-                if (dolog)
-                {
-                    lock (log_locker)
-                    {
-                        Console.WriteLine("{0} problem with x and y; x = {1} y = {2}, W = {3}, H = {4}", Thread.CurrentThread.Name, x, y, W, H);
-                    }
-                }
                 return;
-            }
-
-            if (dolog)
-            {
-                lock (log_locker)
-                {
-                    Console.WriteLine("{0} is requesting the mutex", Thread.CurrentThread.Name);
-                    Console.WriteLine("{0} has entered the protected area", Thread.CurrentThread.Name);
-                }
-            }
-            lock (locker)
-            {
-                canvas_buffer.SetPixel(x, y, color);
-            }
-            if (dolog)
-            {
-                lock (log_locker)
-                {
-                    Console.WriteLine("{0} has released the mutex", Thread.CurrentThread.Name);
-                }
-            }
+            canvas_buffer.SetPixel(x, y, color);
         }
 
         Vector3D CanvasToViewport(double w, double h, double x, double y)
@@ -325,7 +278,7 @@ namespace Bubbles
                 }
 
                 // Shadow check.
-                KeyValuePair<Bubble, double> blocker = ClosestIntersection(point, vec_l, EPSILON, t_max)[0];
+                KeyValuePair<Bubble, double> blocker = ClosestIntersection(point, vec_l, EPSILON, t_max);
                 if (blocker.Key != null)
                 {
                     continue;
@@ -391,8 +344,8 @@ namespace Bubbles
             }
 
             // Проверка пересечения с Circle3D
-            List<double> circleIntersections = IntersectRayCircle3D(origin, direction, bubble);
-            res.AddRange(circleIntersections);
+            //List<double> circleIntersections = IntersectRayCircle3D(origin, direction, bubble);
+            //res.AddRange(circleIntersections);
 
             return res;
         }
@@ -429,46 +382,30 @@ namespace Bubbles
         }
 
 
-        List<KeyValuePair<Bubble, double>> ClosestIntersection(Vector3D origin, Vector3D direction,
-                                                 double min_t, double max_t)
+        KeyValuePair<Bubble, double> ClosestIntersection(Vector3D origin, Vector3D direction,
+                                                         double min_t, double max_t)
         {
             double closest_t = double.PositiveInfinity;
-            Bubble closest = null;
-
-            double closest_t2 = double.PositiveInfinity;
-            Bubble closest2 = null;
-
+            Bubble closest_sphere = null;
             for (int i = 0; i < spheres.Count; i++)
             {
                 List<double> ts = IntersectRaySphericalSegment(origin, direction, spheres[i]);
-
-                // Проверка пересечений
-                foreach (double t in ts)
+                if (ts[0] < closest_t && min_t < ts[0] && ts[0] < max_t)
                 {
-                    if (min_t < t && t < max_t) // Проверка диапазона
-                    {
-                        if (t < closest_t)
-                        {
-                            // Обновляем ближайшую сферу
-                            closest_t2 = closest_t; // Сохраняем предыдущее ближайшее
-                            closest2 = closest; // Сохраняем предыдущее ближайшее
-                            closest_t = t;
-                            closest = spheres[i];
-                        }
-                        else if (t < closest_t2)
-                        {
-                            // Обновляем вторую ближайшую сферу
-                            closest_t2 = t;
-                            closest2 = spheres[i];
-                        }
-                    }
+                    closest_t = ts[0];
+                    closest_sphere = spheres[i];
+                }
+                if (ts[1] < closest_t && min_t < ts[1] && ts[1] < max_t)
+                {
+                    closest_t = ts[1];
+                    closest_sphere = spheres[i];
                 }
             }
-
-            List<KeyValuePair<Bubble, double>> res = new List<KeyValuePair<Bubble, double>>();
-            res.Add(new KeyValuePair<Bubble, double>(closest, closest_t));
-            res.Add(new KeyValuePair<Bubble, double>(closest2, closest_t2));
-            return res;
+            if (closest_sphere != null)
+            {
+                return new KeyValuePair<Bubble, double>(closest_sphere, closest_t);
+            }
+            return new KeyValuePair<Bubble, double>(null, 0);
         }
     }
 }

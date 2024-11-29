@@ -22,18 +22,18 @@ namespace Bubbles
         private Color color;          // Цвет
         private int specular;         // Спекулярность
         private double reflective;    // Отражательная способность
-        private double transparency;
-        private double refractive_index;
+        //private double transparency;
+        //private double refractive_index;
 
-        public Bubble(Vector3D center, double radius, Color color, int specular, double reflective, double transparency, double refractiveIndex)
+        public Bubble(Vector3D center, double radius, Color color, int specular, double reflective/*, double transparency, double refractiveIndex*/)
         {
             this.center = center;
             this.radius = radius;
             this.color = color;
             this.specular = specular;
             this.reflective = reflective;
-            this.transparency = transparency;
-            this.refractive_index = refractiveIndex;
+            //this.transparency = transparency;
+            //this.refractive_index = refractiveIndex;
 
             this.part1 = new SphericalSegment(center, radius, new Vector3D(-1, -1, 0));
             this.part2 = new SphericalSegment(center, radius, new Vector3D(1, 1, 0));
@@ -47,8 +47,8 @@ namespace Bubbles
         }
         public SphericalSegment Part1 { get { return this.part1; } set { this.part1 = value; } }
         public SphericalSegment Part2 { get { return this.part2; } set { this.part2 = value; } }
-        public double Transparency { get { return transparency; } set {transparency = value; } }
-        public double RefractiveIndex { get {return refractive_index; } set {refractive_index = value; } }
+        //public double Transparency { get { return transparency; } set {transparency = value; } }
+        //public double RefractiveIndex { get {return refractive_index; } set {refractive_index = value; } }
         public Vector3D Center { get { return center; } set { center = value; part1.Center = value; part2.Center = value; } }
         public double Radius { get { return radius; } set { radius = value; part1.Height = radius; part2.Height = radius; } }
         
@@ -61,16 +61,14 @@ namespace Bubbles
 
         public Color Color_mul(double n)
         {
-            return Color.FromArgb((byte)Math.Min(255, (this.color.A * n)),
-                                  (byte)Math.Min(255, (this.color.R * n)),
+            return Color.FromArgb((byte)Math.Min(255, (this.color.R * n)),
                                   (byte)Math.Min(255, (this.color.G * n)),
                                   (byte)Math.Min(255, (this.color.B * n)));
         }
 
         public Color Color_add(Color temp)
         {
-            return Color.FromArgb((byte)Math.Min(255, this.color.A + temp.A),
-                                  (byte)Math.Min(255, this.color.R + temp.R),
+            return Color.FromArgb((byte)Math.Min(255, this.color.R + temp.R),
                                   (byte)Math.Min(255, this.color.G + temp.G),
                                   (byte)Math.Min(255, this.color.B + temp.B));
         }
