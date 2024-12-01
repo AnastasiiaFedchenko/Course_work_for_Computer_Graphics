@@ -18,20 +18,20 @@ namespace Bubbles
             this.bubble1 = bubble1;
             this.bubble2 = bubble2;
 
-            PositionBubbles();
+            //PositionBubbles();
         }
 
-        public List<Vector3D> GetIntersectionPoint()
+        private static List<Vector3D> GetIntersectionPoint(Bubble b1, Bubble b2)
         {
             List<Vector3D> res = new List<Vector3D>();
             // Вычисляем расстояние между центрами сфер
             double distance = Math.Sqrt(
-                             Math.Pow(bubble2.Center.X - bubble1.Center.X, 2) +
-                             Math.Pow(bubble2.Center.Y - bubble1.Center.Y, 2) +
-                             Math.Pow(bubble2.Center.Z - bubble1.Center.Z, 2));
+                             Math.Pow(b2.Center.X - b1.Center.X, 2) +
+                             Math.Pow(b2.Center.Y - b1.Center.Y, 2) +
+                             Math.Pow(b2.Center.Z - b1.Center.Z, 2));
 
             // Проверяем, пересекаются ли сферы
-            if (distance > (bubble1.Radius + bubble2.Radius) || distance < Math.Abs(bubble1.Radius - bubble2.Radius)) 
+            if (distance > (b1.Radius + b2.Radius) || distance < Math.Abs(b1.Radius - b2.Radius)) 
             {
                 res.Add(new Vector3D(double.PositiveInfinity, double.PositiveInfinity, double.PositiveInfinity));
                 res.Add(new Vector3D(double.PositiveInfinity, double.PositiveInfinity, double.PositiveInfinity));
@@ -39,14 +39,14 @@ namespace Bubbles
             }
                 
             // Находим точку P2, которая является центром окружности пересечения
-            double a = (bubble1.Radius * bubble1.Radius - bubble2.Radius * bubble2.Radius + distance * distance) / (2 * distance);
-            double h = (float)Math.Sqrt(bubble1.Radius * bubble1.Radius - a * a);
+            double a = (b1.Radius * b1.Radius - b2.Radius * b2.Radius + distance * distance) / (2 * distance);
+            double h = (float)Math.Sqrt(b1.Radius * b1.Radius - a * a);
 
             // Находим точку P2
-            Vector3D P2 = bubble1.Center + (bubble2.Center - bubble1.Center) * (a / distance);
+            Vector3D P2 = b1.Center + (b2.Center - b1.Center) * (a / distance);
 
             // Вектор перпендикулярный к вектору между центрами
-            Vector3D direction = bubble2.Center - bubble1.Center;
+            Vector3D direction = b2.Center - b1.Center;
             direction.Normalize();
             Vector3D perpendicular = Vector3D.CrossProduct(direction, new Vector3D(1, 0, 0));
             if (perpendicular.Length < 0.01f) // Если направление совпадает с осью X
@@ -63,96 +63,79 @@ namespace Bubbles
             return res;
         }
 
-        private double ContactAngle()
+        private static double ContactAngle(Bubble b1, Bubble b2)
         {
-            List<Vector3D> Points = GetIntersectionPoint();
-            //Vector3D centerOfIntersect = Points[0];
+            List<Vector3D> Points = GetIntersectionPoint(b1, b2);
             Vector3D commonPoint = Points[1];
             Console.WriteLine(commonPoint);
-            // Векторы от центральной точки к боковым
-            Vector3D vectorAB = bubble1.Center - commonPoint;
-            Vector3D vectorAC = bubble2.Center - commonPoint;
+            Vector3D vectorAB = b1.Center - commonPoint;
+            Vector3D vectorAC = b2.Center - commonPoint;
 
-            // Длина векторов
             double lengthAB = vectorAB.Length;
             double lengthAC = vectorAC.Length;
 
-            // Скалярное произведение
             double dotProduct = Vector3D.DotProduct(vectorAB, vectorAC);
 
-            // Вычисление косинуса угла
             double cosAngle = dotProduct / (lengthAB * lengthAC);
 
-            // Ограничиваем значение косинуса для избежания ошибок округления
             cosAngle = Math.Max(-1, Math.Min(1, cosAngle));
 
-            // Вычисляем угол в радианах и преобразуем в градусы
             double angleInRadians = Math.Acos(cosAngle);
             double angleInDegrees = angleInRadians * (180.0 / Math.PI);
 
             Console.WriteLine(angleInDegrees);
             return angleInDegrees;
         }
-        private void MergeBubbles()
+        private static Bubble MergeBubbles(Bubble b1, Bubble b2)
         {
-            // Проверяем, что оба пузыря существуют
-            if (bubble1 == null || bubble2 == null)
+            if (b1 == null || b2 == null)
             {
                 Console.WriteLine("Не удалось слить пузыри: один из пузырей отсутствует.");
-                return;
+                return null;
             }
 
-            // Вычисляем новый центр как среднее значение центров двух пузырей
-            Vector3D newCenter = (bubble1.Center + bubble2.Center) / 2;
+            Vector3D newCenter = (b1.Center + b2.Center) / 2;
 
-            // Вычисляем объёмы двух пузырей
-            double volume1 = (4.0 / 3.0) * Math.PI * Math.Pow(bubble1.Radius, 3);
-            double volume2 = (4.0 / 3.0) * Math.PI * Math.Pow(bubble2.Radius, 3);
+            double volume1 = (4.0 / 3.0) * Math.PI * Math.Pow(b1.Radius, 3);
+            double volume2 = (4.0 / 3.0) * Math.PI * Math.Pow(b2.Radius, 3);
 
-            // Суммируем объёмы
             double totalVolume = volume1 + volume2;
 
-            // Вычисляем новый радиус на основе общего объёма
             double newRadius = Math.Pow((totalVolume * 3.0) / (4.0 * Math.PI), 1.0 / 3.0);
 
-            // Обновляем свойства первого пузыря
-            bubble1.Center = newCenter;
-            bubble1.Radius = newRadius;
+            b1.Center = newCenter;
+            b1.Radius = newRadius;
 
-            bubble2 = null;
+            b2 = null;
 
             Console.WriteLine("Пузыри слиты в один большой пузырь.");
+            return b1;
         }
-        private void PushBubblesApart()
+        private static List<Bubble> PushBubblesApart(Bubble b1, Bubble b2)
         {
-            // Проверяем, что оба пузыря существуют
-            if (bubble1 == null || bubble2 == null)
+            List<Bubble> res = new List<Bubble>();
+            if (b1 == null || b2 == null)
             {
                 Console.WriteLine("Не удалось оттолкнуть пузыри: один из пузырей отсутствует.");
-                return;
+                res.Add(b1);
+                res.Add(b2);
+                return res;
             }
 
-            // Вычисляем вектор направления от bubble1 к bubble2
-            Vector3D direction = bubble2.Center - bubble1.Center;
+            Vector3D direction = b2.Center - b1.Center;
 
-            // Вычисляем текущее расстояние между центрами пузырей
             double currentDistance = direction.Length;
 
-            // Вычисляем необходимое расстояние между центрами пузырей
-            double requiredDistance = bubble1.Radius + bubble2.Radius;
+            double requiredDistance = b1.Radius + b2.Radius;
 
-            // Если текущее расстояние меньше необходимого, отталкиваем пузыри
             if (currentDistance < requiredDistance)
             {
-                // Нормализуем направление
                 direction.Normalize();
 
-                // Вычисляем, на сколько нужно оттолкнуть пузыри
                 double pushDistance = requiredDistance - currentDistance;
 
-                // Отталкиваем пузыри
-                bubble1.Center -= direction * (pushDistance / 2); // Отталкиваем первый пузырь
-                bubble2.Center += direction * (pushDistance / 2); // Отталкиваем второй пузырь
+                b1.Center -= direction * (pushDistance / 2); // Отталкиваем первый пузырь
+                b2.Center += direction * (pushDistance / 2); // Отталкиваем второй пузырь
 
                 Console.WriteLine("Пузыри оттолкнуты друг от друга.");
             }
@@ -160,8 +143,11 @@ namespace Bubbles
             {
                 Console.WriteLine("Пузыри уже находятся на необходимом расстоянии друг от друга.");
             }
+            res.Add(b1);
+            res.Add(b2);
+            return res;
         }
-        public void CreateClusters()
+        private void CreateClusters()
         {
             // Проверяем, что оба пузыря существуют
             if (bubble1 == null || bubble2 == null)
@@ -171,7 +157,7 @@ namespace Bubbles
             }
 
             // Находим точку пересечения
-            List<Vector3D> Points = GetIntersectionPoint();
+            List<Vector3D> Points = GetIntersectionPoint(bubble1, bubble2);
             Vector3D centerOfIntersect = Points[0];
             Vector3D intersectionPoint = Points[1];
             //Console.WriteLine(commonPoint);
@@ -254,11 +240,7 @@ namespace Bubbles
 
         private SphericalSegment CreateSegment(SphericalSegment originalSegment, Vector3D membraneNormal)
         {
-            // Создаем новый сегмент, копируя параметры из оригинального сегмента
             SphericalSegment newSegment = new SphericalSegment(originalSegment.Center, originalSegment.Height, membraneNormal);
-
-            // Здесь можно добавить дополнительную логику для настройки сегмента
-            // Например, если необходимо изменить радиус или высоту в зависимости от других условий
 
             return newSegment;
         }
@@ -277,45 +259,45 @@ namespace Bubbles
         }
         private double CalculateHeight(SphericalSegment segment, Vector3D intersectionPoint, Vector3D direction)
         {
-            // Расстояние от центра сегмента до точки пересечения
             Console.WriteLine($"intersectionPoint {intersectionPoint}, direction {direction}");
 
-            // Вычисляем вектор от центра сегмента до точки пересечения
             Vector3D toIntersection = intersectionPoint - segment.Center;
-
-            // Вычисляем длину этого вектора
             double distance = toIntersection.Length;
-
-            // Определяем новую высоту на основе сонаправленности векторов
             toIntersection.Normalize();
             direction.Normalize();
 
-            // Вычисляем скалярное произведение
-            //double dotProduct = Vector3D.DotProduct(toIntersection, direction);
-
             // Если векторы сонаправлены, уменьшаем высоту
             double height;
-            if (AreCoDirectional(toIntersection, direction)) // Векторы сонаправлены
-            {
-                height = distance; // Уменьшаем высоту на основе расстояния
-            }
-            else // Векторы не сонаправлены
-            {
-                height = segment.Height; // Возвращаем оригинальную высоту сегмента
-            }
+            if (AreCoDirectional(toIntersection, direction))
+                height = distance;
+            else
+                height = segment.Height;
 
             Console.WriteLine($"height {height}");
             return height;
         }
-        private void PositionBubbles()
+        public static List<Obj> PositionBubbles(Bubble b1, Bubble b2)
         {
-            double contactAngle = ContactAngle();
+            double contactAngle = ContactAngle(b1, b2);
+            List<Obj> res = new List<Obj>();
             if (contactAngle < 55.0) // слияние в один большой пузырь
-                MergeBubbles();
+            {
+                Bubble res_b = MergeBubbles(b1, b2);
+                res.Add(res_b);
+            }
             else if (contactAngle > 65.0) // отталкивание
-                PushBubblesApart();
+            {
+                List<Bubble> bubbles = PushBubblesApart(b1, b2);
+                res.Add(bubbles[0]);
+                res.Add(bubbles[1]);
+            }
             else // образование класстера
-                CreateClusters();
+            {
+                CombinedBubble cluster = new CombinedBubble(b1.Id, b1, b2);
+                cluster.CreateClusters();
+                res.Add(cluster);
+            }
+            return res;
         }
 
         public Bubble Bubble1 { get => bubble1; }

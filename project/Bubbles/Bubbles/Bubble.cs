@@ -18,6 +18,7 @@ namespace Bubbles
         {
             this.id = id;
         }
+        public int Id { get { return id; } } 
     }
     public class Bubble : Obj
     {
