@@ -11,7 +11,15 @@ using System.Reflection;
 
 namespace Bubbles
 {
-    public class Bubble 
+    abstract public class Obj
+    {
+        protected int id;
+        public Obj(int id)
+        {
+            this.id = id;
+        }
+    }
+    public class Bubble : Obj
     {
         SphericalSegment part1;
         SphericalSegment part2;
@@ -22,10 +30,8 @@ namespace Bubbles
         private Color color;          // Цвет
         private int specular;         // Спекулярность
         private double reflective;    // Отражательная способность
-        //private double transparency;
-        //private double refractive_index;
 
-        public Bubble(Vector3D center, double radius, Color color, int specular, double reflective/*, double transparency, double refractiveIndex*/)
+        public Bubble(int id, Vector3D center, double radius, Color color, int specular, double reflective) : base(id)
         {
             this.center = center;
             this.radius = radius;

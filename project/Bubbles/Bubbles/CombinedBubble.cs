@@ -8,12 +8,12 @@ using static Bubbles.Bubble;
 
 namespace Bubbles
 {
-    public class CombinedBubble
+    public class CombinedBubble : Obj
     {
         private Bubble bubble1;
         private Bubble bubble2;
 
-        public CombinedBubble(Bubble bubble1, Bubble bubble2)
+        public CombinedBubble(int id, Bubble bubble1, Bubble bubble2) : base(id)
         {
             this.bubble1 = bubble1;
             this.bubble2 = bubble2;

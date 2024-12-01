@@ -22,7 +22,7 @@ namespace Bubbles
         public Form1()
         {
             InitializeComponent();
-            drawer = new Renderer(4, 1, new Vector3D(0, 0, 0), 1, Canvas.Width, Canvas.Height);
+            drawer = new Renderer(1, 1, new Vector3D(0, 0, -4), 1, Canvas.Width, Canvas.Height);
             
             Canvas.Image = drawer.Canvas_Buffer;
         }
@@ -33,20 +33,18 @@ namespace Bubbles
             drawer.AddSphere(new Bubble(new Vector3D(0, 1, 0), 2, System.Drawing.Color.Red, 32, 0.1, 0.7, 1));*/
 
             //drawer.AddSphere(new Bubble(new Vector3D(0, -1, 3), 1, System.Drawing.Color.FromArgb(255, 0, 0), 500, 0.2));
-            Bubble bubble1 = new Bubble(new Vector3D(-2.2, -0.65, 3), 0.75, System.Drawing.Color.FromArgb(0, 255, 0), 500, 0.4);
-            Bubble bubble2 = new Bubble(new Vector3D(-2.5, 0.25, 3), 1, System.Drawing.Color.FromArgb(0, 0, 255), 500, 0.3);
+            Bubble bubble1 = new Bubble(1, new Vector3D(-2.2, -0.65, 3), 0.75, System.Drawing.Color.FromArgb(0, 255, 0), 500, 0.4);
+            Bubble bubble2 = new Bubble(2, new Vector3D(-2.5, 0.25, 3), 1, System.Drawing.Color.FromArgb(0, 0, 255), 500, 0.3);
 
-            CombinedBubble combinedBubble = new CombinedBubble(bubble1, bubble2);
-            drawer.AddSphere(combinedBubble.Bubble1);
-            if (combinedBubble.Bubble2 != null)
-                drawer.AddSphere(combinedBubble.Bubble2);
+            CombinedBubble combinedBubble = new CombinedBubble(3, bubble1, bubble2);
+            drawer.AddSphere(combinedBubble);
 
-            Bubble bubble3 = new Bubble(new Vector3D(2, -1, 3), 1, System.Drawing.Color.HotPink, 500, 0.4);
-            Bubble bubble4 = new Bubble(new Vector3D(1, 0.25, 3), 1, System.Drawing.Color.Violet, 500, 0.3);
+            Bubble bubble3 = new Bubble(4, new Vector3D(2, -1, 3), 1, System.Drawing.Color.HotPink, 500, 0.4);
+            Bubble bubble4 = new Bubble(5, new Vector3D(1, 0.25, 3), 1, System.Drawing.Color.Violet, 500, 0.3);
 
-            CombinedBubble combinedBubble2 = new CombinedBubble(bubble3, bubble4);
+            CombinedBubble combinedBubble2 = new CombinedBubble(6, bubble3, bubble4);
             drawer.AddSphere(combinedBubble2.Bubble1);
-            if (combinedBubble2.Bubble2 != null)
+            if (combinedBubble.Bubble2 != null)
                 drawer.AddSphere(combinedBubble2.Bubble2);
 
             /*Bubble bubble1 = new Bubble(new Vector3D(0, 0, 0), 2, System.Drawing.Color.Orange, 32, 0.2);

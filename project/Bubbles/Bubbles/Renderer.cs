@@ -11,7 +11,6 @@ using System.Windows.Media;
 using System.Windows.Media.Media3D;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
-using static Bubbles.Bubble;
 
 namespace Bubbles
 {
@@ -78,7 +77,7 @@ namespace Bubbles
         int viewport_size;
         int d;
         Vector3D camera_position;
-        List<Bubble> spheres;
+        List<Obj> spheres;
         List<Light> lights;
         int recursion_depth;
 
@@ -94,7 +93,7 @@ namespace Bubbles
             this.viewport_size = viewport_size;
             this.d = d;
             this.camera_position = camera_position;
-            spheres = new List<Bubble>();
+            spheres = new List<Obj>();
             lights = new List<Light>();
             this.recursion_depth = recursive_depth;
 
@@ -106,7 +105,7 @@ namespace Bubbles
         }
         public Bitmap Canvas_Buffer { get { return canvas_buffer; } }
         public void AddLight(Light l) { lights.Add(l); }
-        public void AddSphere(Bubble s) { spheres.Add(s); }
+        public void AddSphere(Obj s) { spheres.Add(s); }
 
         public int ViewportSize { get { return viewport_size; }  set { viewport_size = value; } }
 
@@ -134,23 +133,6 @@ namespace Bubbles
         }
 
         Vector3D ReflectRay(Vector3D a, Vector3D b) { return b * (2 * Vector3D.DotProduct(a, b)) - a; }
-        Vector3D RefractRay(Vector3D direction, Vector3D normal, double refractiveIndex)
-        {
-            double n1 = 1.0; // Показатель преломления воздуха
-            double n2 = refractiveIndex; // Показатель преломления материала
-            double cosI = -Vector3D.DotProduct(normal, direction);
-
-            // Вычисление синуса угла преломления
-            double sin2T = (n1 / n2) * (n1 / n2) * (1 - cosI * cosI);
-
-            // Проверка на полное внутреннее отражение
-            if (sin2T > 1.0) return new Vector3D(0, 0, 0); // Возвращаем нулевой вектор, если полное внутреннее отражение
-
-            double cosT = Math.Sqrt(1.0 - sin2T);
-
-            // Используем формулу для расчета преломленного луча
-            return (direction * (n1 / n2)) + (normal * (n1 / n2 * cosI - cosT));
-        }
 
         public delegate System.Drawing.Color ThreadTraceRay(Vector3D origin, Vector3D direction, double min_t, double max_t, int depth);
         System.Drawing.Color TraceRay(Object obj)
@@ -191,29 +173,6 @@ namespace Bubbles
                     (int)(reflected_color.G * closest.Reflective),
                     (int)(reflected_color.B * closest.Reflective)
                 );
-
-                /*// Обработка преломления
-                System.Drawing.Color refracted_color = System.Drawing.Color.Black;
-                if (closest.Transparency > 0)
-                {
-                    Vector3D refracted_ray = RefractRay(view, normal, closest.RefractiveIndex);
-                    refracted_color = TraceRay(new TraceRayArgs(args.x, args.y, point, refracted_ray, EPSILON,
-                                                                double.PositiveInfinity, args.depth - 1));
-                    refracted_color = System.Drawing.Color.FromArgb(
-                        (int)(refracted_color.A * closest.Transparency),
-                        (int)(refracted_color.R * closest.Transparency),
-                        (int)(refracted_color.G * closest.Transparency),
-                        (int)(refracted_color.B * closest.Transparency)
-                    );
-                }
-
-                // Смешивание цветов
-                System.Drawing.Color result_color = System.Drawing.Color.FromArgb(
-                    Math.Min(255, local_color.A + reflected_color.A + refracted_color.A),
-                    Math.Min(255, local_color.R + reflected_color.R + refracted_color.R),
-                    Math.Min(255, local_color.G + reflected_color.G + refracted_color.G),
-                    Math.Min(255, local_color.B + reflected_color.B + refracted_color.B)
-                );*/
 
                 System.Drawing.Color result_color = System.Drawing.Color.FromArgb(
                     Math.Min(255, local_contribution.R + reflected_contribution.R),
@@ -306,7 +265,7 @@ namespace Bubbles
             return intensity;
         }
 
-        public List<double> IntersectRaySphericalSegment(Vector3D origin, Vector3D direction, Bubble bubble)
+        public List<double> IntersectRayBubble(Vector3D origin, Vector3D direction, Bubble bubble)
         {
             Vector3D oc = origin - bubble.Center;
 
@@ -342,42 +301,6 @@ namespace Bubbles
                 if (!bubble.IsWithinBubble(intersectionPoint2))
                     res[1] = double.PositiveInfinity; // Убираем вторую точку пересечения
             }
-
-            // Проверка пересечения с Circle3D
-            //List<double> circleIntersections = IntersectRayCircle3D(origin, direction, bubble);
-            //res.AddRange(circleIntersections);
-
-            return res;
-        }
-
-        private List<double> IntersectRayCircle3D(Vector3D origin, Vector3D direction, Bubble bubble)
-        {
-            List<double> res = new List<double>();
-
-            // Убедимся, что круг имеет нормаль
-            Vector3D normal = bubble.MembraneNormal;
-
-            // Проверяем, не параллелен ли луч плоскости круга
-            double denom = Vector3D.DotProduct(normal, direction);
-            if (Math.Abs(denom) > 1e-6) // Если не параллелен
-            {
-                // Находим t, при котором луч пересекает плоскость круга
-                Vector3D oc = origin - bubble.MembraneCenter;
-                double t = -Vector3D.DotProduct(oc, normal) / denom;
-
-                if (t >= 0) // Пересечение впереди
-                {
-                    Vector3D intersectionPoint = origin + direction * t;
-
-                    // Проверяем, находится ли точка пересечения внутри круга
-                    Vector3D circleToIntersection = intersectionPoint - bubble.MembraneCenter;
-                    if (circleToIntersection.LengthSquared <= bubble.MembraneRadius * bubble.MembraneRadius)
-                    {
-                        res.Add(t); // Добавляем точку пересечения
-                    }
-                }
-            }
-
             return res;
         }
 
@@ -389,16 +312,38 @@ namespace Bubbles
             Bubble closest_sphere = null;
             for (int i = 0; i < spheres.Count; i++)
             {
-                List<double> ts = IntersectRaySphericalSegment(origin, direction, spheres[i]);
-                if (ts[0] < closest_t && min_t < ts[0] && ts[0] < max_t)
-                {
-                    closest_t = ts[0];
-                    closest_sphere = spheres[i];
+                if (spheres[i] is Bubble bubble)
+                { 
+                    List<double> ts = IntersectRayBubble(origin, direction, bubble);
+                    for (int j = 0; j < ts.Count; j++)
+                    {
+                        if (ts[j] < closest_t && min_t < ts[j] && ts[j] < max_t)
+                        {
+                            closest_t = ts[j];
+                            closest_sphere = bubble;
+                        }
+                    }
                 }
-                if (ts[1] < closest_t && min_t < ts[1] && ts[1] < max_t)
+                else if (spheres[i] is CombinedBubble cluster) 
                 {
-                    closest_t = ts[1];
-                    closest_sphere = spheres[i];
+                    List<double> ts1 = IntersectRayBubble(origin, direction, cluster.Bubble1);
+                    List<double> ts2 = IntersectRayBubble(origin, direction, cluster.Bubble2);
+                    for (int j = 0; j < ts1.Count; j++)
+                    {
+                        if (ts1[j] < closest_t && min_t < ts1[j] && ts1[j] < max_t)
+                        {
+                            closest_t = ts1[j];
+                            closest_sphere = cluster.Bubble1;
+                        }
+                    }
+                    for (int j = 0; j < ts2.Count; j++)
+                    {
+                        if (ts2[j] < closest_t && min_t < ts2[j] && ts2[j] < max_t)
+                        {
+                            closest_t = ts2[j];
+                            closest_sphere = cluster.Bubble2;
+                        }
+                    }
                 }
             }
             if (closest_sphere != null)
