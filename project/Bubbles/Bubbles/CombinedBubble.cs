@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using System.Windows.Media.Media3D;
 using static Bubbles.Bubble;
 
@@ -17,6 +18,7 @@ namespace Bubbles
         {
             this.bubble1 = bubble1;
             this.bubble2 = bubble2;
+            //this.bubble2.Id = bubble1.Id;
         }
 
         private static List<Vector3D> GetIntersectionPoint(Bubble b1, Bubble b2)
@@ -323,8 +325,16 @@ namespace Bubbles
             }
             else // образование кластера
             {
+                if (from_combined)
+                {
+                    MessageBox.Show(
+                    $"Угол равен {contactAngle}. Невозможно образование кластера из трёх пузырей.",
+                    "ERROR");
+                    return null;
+                }
                 CombinedBubble cluster = new CombinedBubble(b1.Id, b1, b2);
                 cluster.CreateClusters();
+                //cluster.Bubble2.Id = cluster.Bubble1.Id; 
                 res.Add(cluster);
             }
             return res;

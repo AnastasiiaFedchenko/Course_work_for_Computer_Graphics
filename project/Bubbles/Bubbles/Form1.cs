@@ -388,6 +388,30 @@ namespace Bubbles
                             {
                                 r1 = CombinedBubble.PositionBubbles(cb1.Bubble1, b3, true);
                                 r2 = CombinedBubble.PositionBubbles(cb1.Bubble2, b3, true);
+                                if (r1 == null && r2 == null)
+                                {
+                                    Console.WriteLine("ERROR! 3 bubble cluster");
+                                    return -1;
+                                }
+                                else if (r1 != null && r2 == null && r1.Count == 1 && r1[0] is Bubble b)
+                                {
+                                    r1 = CombinedBubble.PositionBubbles(b, cb1.Bubble2, false);
+                                }
+                                else if (r2 != null && r1 == null && r2.Count == 1 && r2[0] is Bubble bb)
+                                {
+                                    /*if (bb.Id != cb1.Id)
+                                        bb.Id = cb1.Id;*/
+                                    r2 = CombinedBubble.PositionBubbles(bb, cb1.Bubble1, false);
+                                    if (r2.Count == 2)
+                                    {
+                                        r2[0].Id = id1;
+                                        r2[1].Id = id2;
+                                    }
+                                }
+                                /*if (r1 == null && r2.Count == 1)
+                                {
+                                    r2 = CombinedBubble.PositionBubbles(cb1.Bubble1, r2[0], false);
+                                }*/
                             }
                             else if (drawer.Spheres(i) is Bubble b4 && drawer.Spheres(j) is CombinedBubble cb2)
                             {
