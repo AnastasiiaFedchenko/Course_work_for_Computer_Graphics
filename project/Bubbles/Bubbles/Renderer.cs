@@ -86,6 +86,15 @@ namespace Bubbles
                 }
             }
         }
+        public void DeleteSphere(int id)
+        {
+            for (int i = 0; i < spheres.Count; i++)
+                if (spheres[i].Id == id)
+                {
+                    spheres.RemoveAt(i);
+                    return;
+                }
+        }
         public int SpheresCount() { return spheres.Count; }
         public void AddSphere(Obj s) { spheres.Add(s); }
 

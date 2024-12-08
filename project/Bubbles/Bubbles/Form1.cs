@@ -78,7 +78,8 @@ namespace Bubbles
             Bubble bubble5 = new Bubble(5, new Vector3D(-1.5, 0.75, 3), 0.75, System.Drawing.Color.FromArgb(255, 0, 0), 500, 0.4);
             drawer.AddSphere(bubble5);
             //add_bubble(bubble5);
-            position_bubbles(3);
+            int rc = position_bubbles(3);
+
             bubbles_checked_list();
 
             /*Bubble bubble1 = new Bubble(new Vector3D(0, 0, 0), 2, System.Drawing.Color.Orange, 32, 0.2);
@@ -107,7 +108,8 @@ namespace Bubbles
             drawer.AddLight(new Light(Light.light_type.POINT, 0.8, new Vector3D(2, 1, 0)));
             drawer.AddLight(new Light(Light.light_type.DIRECTIONAL, 0.4, new Vector3D(1, 4, 4)));
 
-            drawer.Render();
+            if (rc != -1)
+                drawer.Render();
             Canvas.Invalidate();
             
         }
@@ -303,12 +305,12 @@ namespace Bubbles
                 Canvas.Invalidate();
             }
         }
-        private void position_bubbles(int n)
+        private int position_bubbles(int n)
         {
             if (n <= 0)
             {
                 Console.WriteLine("Превышен лимит рекурсии.");
-                return;
+                return -1;
             }
             bool any_intersection = false;
             bool any_more_than_2 = false;
@@ -348,22 +350,26 @@ namespace Bubbles
                         }
                     }
                 }
-                if (count[i] > 2)
+                if (count[i] >= 2)
                     any_more_than_2 = true;
                 Console.WriteLine($"id: {drawer.Spheres(i).Id} всего {count[i]} соприкосновений.");
             }
             for (int i = 0; i < count.Count; i++)
                 Console.Write($"{count[i]} ");
             Console.Write("\n");
-            if (any_intersection == false)
-            {
-                Console.WriteLine("no intersections");
-                return;
-            }
-            else if (any_more_than_2)
+            
+            if (any_more_than_2)
             {
                 Console.WriteLine("Больше чем 2 пересечения.");
-                return;
+                MessageBox.Show(
+                    "Больше чем одно пересечение",
+                    "ERROR");
+                return -1;
+            }
+            else if (any_intersection == false)
+            {
+                Console.WriteLine("no intersections");
+                return 0;
             }
             else
             {
@@ -374,6 +380,8 @@ namespace Bubbles
                     {
                         if (a[i][j] == 1)
                         {
+                            int id1 = drawer.Spheres(i).Id;
+                            int id2 = drawer.Spheres(j).Id;
                             if (drawer.Spheres(i) is Bubble b1 && drawer.Spheres(j) is Bubble b2)
                                 r1 = CombinedBubble.PositionBubbles(b1, b2, false);
                             else if (drawer.Spheres(i) is CombinedBubble cb1 && drawer.Spheres(j) is Bubble b3)
@@ -390,15 +398,36 @@ namespace Bubbles
                                 drawer.ChangeSphere(r1[k].Id, r1[k]);
                             for (int k = 0; r2 != null && k < r2.Count; k++)
                                 drawer.ChangeSphere(r2[k].Id, r2[k]);
+                            if (r1 != null && r1.Count == 1) 
+                            {
+                                if (r1[0].Id == id1)
+                                    drawer.DeleteSphere(id2);
+                                else 
+                                    drawer.DeleteSphere(id1);
+                            }
+                            if (r2 != null && r2.Count == 1) 
+                                        {
+                                if (r2[0].Id == id1)
+                                    drawer.DeleteSphere(id2);
+                                else
+                                    drawer.DeleteSphere(id1);
+                            }
                             a[i][j] = 0;
                             a[j][i] = 0;
                             position_bubbles(n);
                         }
                     }
             }
-            position_bubbles(n - 1);
-            return;
+            
+            return position_bubbles(n - 1);
         }
+
+        private void checkedListBox1_ItemCheck(object sender, ItemCheckEventArgs e)
+        {
+            for (int ix = 0; ix < checkedListBox1.Items.Count; ++ix)
+                if (ix != e.Index) checkedListBox1.SetItemChecked(ix, false);
+        }
+
         private void Canvas_MouseUp(object sender, MouseEventArgs e)
         {
             double scaleFactor = (double)(drawer.Canvas_Buffer.Width) / 1.0; // Определяем коэффициент масштабирования
@@ -411,8 +440,12 @@ namespace Bubbles
             int H = buf.Height;
 
             int k = 0;
+
+            int actual_i;
+            List<Vector3D> initial_centers = new List<Vector3D>();
             if (contours.Count > 0)
             {
+                actual_i = 0;
                 foreach (Contour c in contours)
                 {
                     int id = c.Id;
@@ -424,8 +457,10 @@ namespace Bubbles
                     {
                         if (drawer.Spheres(i).Id == id) 
                         {
+                            actual_i = i;
                             if (drawer.Spheres(i) is Bubble b)
                             {
+                                initial_centers.Add(b.Center);
                                 double distance = b.Center.Z - ViewPoint.Z;
 
                                 double actual_x = x_from_p / (1.0 / distance);
@@ -434,9 +469,10 @@ namespace Bubbles
                                 drawer.SpheresChangeCenter(i, new Vector3D(actual_x, actual_y, b.Center.Z), 0);
                             }
                             else if (drawer.Spheres(i) is CombinedBubble cb)
-                            {
+                            {                              
                                 k = k % 2;
                                 Bubble bubble = (k == 0) ? cb.Bubble1 : cb.Bubble2;
+                                initial_centers.Add(bubble.Center);
                                 double distance = bubble.Center.Z - ViewPoint.Z;
 
                                 double actual_x = x_from_p / (1.0 / distance);
@@ -449,7 +485,17 @@ namespace Bubbles
                     }
                 }
                 contours = new List<Contour>();
-                position_bubbles(3);
+                int rc = position_bubbles(3);
+                if (rc != 0) 
+                {
+                    if (drawer.Spheres(actual_i) is Bubble b)
+                        drawer.SpheresChangeCenter(actual_i, initial_centers[0], 0);
+                    else if (drawer.Spheres(actual_i) is CombinedBubble cb)
+                    {
+                        drawer.SpheresChangeCenter(actual_i, initial_centers[0], 0);
+                        drawer.SpheresChangeCenter(actual_i, initial_centers[1], 1);
+                    }
+                }
                 bubbles_checked_list();
                 drawer.Render();
                 buf_copy = drawer.Canvas_Buffer.Clone(new Rectangle(0, 0, drawer.Canvas_Buffer.Width, drawer.Canvas_Buffer.Height),
