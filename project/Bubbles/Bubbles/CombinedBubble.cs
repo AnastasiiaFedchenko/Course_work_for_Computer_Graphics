@@ -17,8 +17,6 @@ namespace Bubbles
         {
             this.bubble1 = bubble1;
             this.bubble2 = bubble2;
-
-            //PositionBubbles();
         }
 
         private static List<Vector3D> GetIntersectionPoint(Bubble b1, Bubble b2)

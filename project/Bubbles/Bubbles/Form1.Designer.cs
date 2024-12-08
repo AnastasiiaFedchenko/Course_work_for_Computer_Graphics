@@ -30,6 +30,9 @@
         {
             this.Canvas = new System.Windows.Forms.PictureBox();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.statusStrip1 = new System.Windows.Forms.StatusStrip();
+            this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
+            this.checkedListBox1 = new System.Windows.Forms.CheckedListBox();
             this.trackBar1 = new System.Windows.Forms.TrackBar();
             this.ClearSceneButton = new System.Windows.Forms.Button();
             this.RTextBox = new System.Windows.Forms.TextBox();
@@ -44,9 +47,10 @@
             this.label2 = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
             this.colorDialog1 = new System.Windows.Forms.ColorDialog();
-            this.checkedListBox1 = new System.Windows.Forms.CheckedListBox();
+            this.listBox1 = new System.Windows.Forms.ListBox();
             ((System.ComponentModel.ISupportInitialize)(this.Canvas)).BeginInit();
             this.groupBox1.SuspendLayout();
+            this.statusStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.trackBar1)).BeginInit();
             this.SuspendLayout();
             // 
@@ -54,12 +58,16 @@
             // 
             this.Canvas.Location = new System.Drawing.Point(332, 5);
             this.Canvas.Name = "Canvas";
-            this.Canvas.Size = new System.Drawing.Size(1408, 1191);
+            this.Canvas.Size = new System.Drawing.Size(1200, 1200);
             this.Canvas.TabIndex = 0;
             this.Canvas.TabStop = false;
+            this.Canvas.MouseDown += new System.Windows.Forms.MouseEventHandler(this.Canvas_MouseDown);
+            this.Canvas.MouseMove += new System.Windows.Forms.MouseEventHandler(this.Canvas_MouseMove);
+            this.Canvas.MouseUp += new System.Windows.Forms.MouseEventHandler(this.Canvas_MouseUp);
             // 
             // groupBox1
             // 
+            this.groupBox1.Controls.Add(this.statusStrip1);
             this.groupBox1.Controls.Add(this.checkedListBox1);
             this.groupBox1.Controls.Add(this.trackBar1);
             this.groupBox1.Controls.Add(this.ClearSceneButton);
@@ -82,6 +90,33 @@
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Меню:";
             // 
+            // statusStrip1
+            // 
+            this.statusStrip1.ImageScalingSize = new System.Drawing.Size(32, 32);
+            this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.toolStripStatusLabel1});
+            this.statusStrip1.Location = new System.Drawing.Point(3, 1139);
+            this.statusStrip1.Name = "statusStrip1";
+            this.statusStrip1.Size = new System.Drawing.Size(308, 42);
+            this.statusStrip1.TabIndex = 10;
+            this.statusStrip1.Text = "statusStrip1";
+            // 
+            // toolStripStatusLabel1
+            // 
+            this.toolStripStatusLabel1.Name = "toolStripStatusLabel1";
+            this.toolStripStatusLabel1.Size = new System.Drawing.Size(237, 32);
+            this.toolStripStatusLabel1.Text = "toolStripStatusLabel1";
+            // 
+            // checkedListBox1
+            // 
+            this.checkedListBox1.Font = new System.Drawing.Font("Arial", 10.875F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            this.checkedListBox1.FormattingEnabled = true;
+            this.checkedListBox1.Location = new System.Drawing.Point(6, 553);
+            this.checkedListBox1.Name = "checkedListBox1";
+            this.checkedListBox1.ScrollAlwaysVisible = true;
+            this.checkedListBox1.Size = new System.Drawing.Size(285, 270);
+            this.checkedListBox1.TabIndex = 9;
+            // 
             // trackBar1
             // 
             this.trackBar1.Location = new System.Drawing.Point(0, 484);
@@ -94,7 +129,7 @@
             // ClearSceneButton
             // 
             this.ClearSceneButton.Font = new System.Drawing.Font("Arial", 10.875F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
-            this.ClearSceneButton.Location = new System.Drawing.Point(0, 1113);
+            this.ClearSceneButton.Location = new System.Drawing.Point(6, 1047);
             this.ClearSceneButton.Name = "ClearSceneButton";
             this.ClearSceneButton.Size = new System.Drawing.Size(302, 65);
             this.ClearSceneButton.TabIndex = 3;
@@ -159,7 +194,7 @@
             this.OzTextBox.Name = "OzTextBox";
             this.OzTextBox.Size = new System.Drawing.Size(213, 44);
             this.OzTextBox.TabIndex = 6;
-            this.OzTextBox.Text = "0";
+            this.OzTextBox.Text = "3";
             // 
             // OyTextBox
             // 
@@ -209,19 +244,23 @@
             this.label1.TabIndex = 2;
             this.label1.Text = "OX:";
             // 
-            // checkedListBox1
+            // listBox1
             // 
-            this.checkedListBox1.FormattingEnabled = true;
-            this.checkedListBox1.Location = new System.Drawing.Point(6, 553);
-            this.checkedListBox1.Name = "checkedListBox1";
-            this.checkedListBox1.Size = new System.Drawing.Size(285, 98);
-            this.checkedListBox1.TabIndex = 9;
+            this.listBox1.Font = new System.Drawing.Font("Arial", 10.875F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            this.listBox1.FormattingEnabled = true;
+            this.listBox1.ItemHeight = 33;
+            this.listBox1.Location = new System.Drawing.Point(1538, 5);
+            this.listBox1.Name = "listBox1";
+            this.listBox1.ScrollAlwaysVisible = true;
+            this.listBox1.Size = new System.Drawing.Size(425, 1159);
+            this.listBox1.TabIndex = 2;
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(12F, 25F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1756, 1208);
+            this.ClientSize = new System.Drawing.Size(1975, 1208);
+            this.Controls.Add(this.listBox1);
             this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.Canvas);
             this.Name = "Form1";
@@ -230,6 +269,8 @@
             ((System.ComponentModel.ISupportInitialize)(this.Canvas)).EndInit();
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
+            this.statusStrip1.ResumeLayout(false);
+            this.statusStrip1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.trackBar1)).EndInit();
             this.ResumeLayout(false);
 
@@ -254,6 +295,9 @@
         private System.Windows.Forms.Button ClearSceneButton;
         private System.Windows.Forms.TrackBar trackBar1;
         private System.Windows.Forms.CheckedListBox checkedListBox1;
+        private System.Windows.Forms.ListBox listBox1;
+        private System.Windows.Forms.StatusStrip statusStrip1;
+        private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel1;
     }
 }
 

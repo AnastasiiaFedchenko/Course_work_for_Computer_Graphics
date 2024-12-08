@@ -37,41 +37,6 @@ namespace Bubbles
             }
         }
 
-        struct RenderPieceArgs
-        {
-            public int x_start;
-            public int x_finish;
-            public int y_start; 
-            public int y_finish;
-            public int w;
-            public int h;
-            public bool DO_LOG;
-
-            public RenderPieceArgs(int x_start, int x_finish, int y_start, int y_finish, int w, int h) 
-            {
-                this.x_start = x_start;
-                this.x_finish = x_finish;
-                this.y_start = y_start;
-                this.y_finish = y_finish;
-                this.w = w;
-                this.h = h;
-
-                DO_LOG = false;
-            }
-            public RenderPieceArgs(int x_start, int x_finish, int y_start, int y_finish, int w, int h, bool do_log)
-            {
-                this.x_start = x_start;
-                this.x_finish = x_finish;
-                this.y_start = y_start;
-                this.y_finish = y_finish;
-                this.w = w;
-                this.h = h;
-
-                this.DO_LOG = do_log;
-            }
-
-        }
-
         const double EPSILON = 0.001;
 
         int viewport_size;
@@ -85,9 +50,6 @@ namespace Bubbles
         Graphics g;
         System.Drawing.Color background_color = System.Drawing.Color.FromArgb(255, 220, 240, 255); //Black;
 
-        private readonly object locker;
-        private readonly object log_locker;
-
         public Renderer(int viewport_size, int d, Vector3D camera_position, int recursive_depth, int canvas_width, int canvas_height) 
         { 
             this.viewport_size = viewport_size;
@@ -99,18 +61,27 @@ namespace Bubbles
 
             canvas_buffer = new Bitmap(canvas_width, canvas_height);
             g = Graphics.FromImage(canvas_buffer);
-
-            locker = new object();
-            log_locker = new object();
         }
         public Bitmap Canvas_Buffer { get { return canvas_buffer; } }
         public void AddLight(Light l) { lights.Add(l); }
+        public Obj Spheres(int i) { return spheres[i]; }
+        public void SpheresChangeCenter(int i, Vector3D c, int k) 
+        { 
+            if (spheres[i] is Bubble b)
+                b.Center = c;
+            else if (spheres[i] is CombinedBubble cb) 
+            { 
+                if (k == 0) cb.Bubble1.Center = c;
+                else if (k == 1) cb.Bubble2.Center = c;
+            }
+        }
+        public int SpheresCount() { return spheres.Count; }
         public void AddSphere(Obj s) { spheres.Add(s); }
 
         public int ViewportSize { get { return viewport_size; }  set { viewport_size = value; } }
 
         public void Clean() {
-            g.FillRectangle(new SolidBrush(System.Drawing.Color.Black),
+            g.FillRectangle(new SolidBrush(background_color),
                 0, 0, canvas_buffer.Width, canvas_buffer.Height);
         }
         public void Render()

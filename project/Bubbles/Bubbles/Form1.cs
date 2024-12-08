@@ -5,11 +5,14 @@ using System.Data;
 using System.Drawing;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Forms;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.Windows.Media.Media3D;
+using static System.Windows.Forms.ListBox;
 //using static System.Collections.Specialized.BitVector32;
 
 namespace Bubbles
@@ -19,11 +22,22 @@ namespace Bubbles
         const double EPSILON = 0.001;
 
         Renderer drawer;
+        Vector3D ViewPoint;
+        List<Contour> contours;
+        int latest_id = 0;
+        Vector3D initial_cursor;
+        Bitmap buf_copy = null;
+        int W, H;
+
         public Form1()
         {
             InitializeComponent();
-            drawer = new Renderer(1, 1, new Vector3D(0, 0, -4), 1, Canvas.Width, Canvas.Height);
-            
+            W = Canvas.Width;
+            H = Canvas.Height;
+            ViewPoint = new Vector3D(0, 0, -4);
+            drawer = new Renderer(1, 1, ViewPoint, 1, W, H);
+            contours = new List<Contour>();
+
             Canvas.Image = drawer.Canvas_Buffer;
         }
 
@@ -38,16 +52,22 @@ namespace Bubbles
 
             List<Obj> res1 = CombinedBubble.PositionBubbles(bubble1, bubble2);
             for (int i = 0; i < res1.Count; i++)
-                if (res1[i] != null)
+                if (res1[i] != null) 
+                { 
                     drawer.AddSphere(res1[i]);
+                    add_bubble(res1[i]);
+                }
 
-            Bubble bubble3 = new Bubble(4, new Vector3D(2, -1, 3), 1, System.Drawing.Color.HotPink, 500, 0.4);
-            Bubble bubble4 = new Bubble(5, new Vector3D(1, 0.25, 3), 1, System.Drawing.Color.Violet, 500, 0.3);
+            Bubble bubble3 = new Bubble(3, new Vector3D(2, -1, 3), 1, System.Drawing.Color.HotPink, 500, 0.4);
+            Bubble bubble4 = new Bubble(4, new Vector3D(1, 0.25, 3), 1, System.Drawing.Color.Violet, 500, 0.3);
 
             List<Obj> res2 = CombinedBubble.PositionBubbles(bubble3, bubble4);
             for (int i = 0; i < res2.Count; i++)
                 if (res2[i] != null)
+                {
                     drawer.AddSphere(res2[i]);
+                    add_bubble(res2[i]);
+                }
 
             /*Bubble bubble1 = new Bubble(new Vector3D(0, 0, 0), 2, System.Drawing.Color.Orange, 32, 0.2);
             Bubble bubble2 = new Bubble(new Vector3D(0, 2, 0), 2, System.Drawing.Color.Red, 10, 0.4);
@@ -78,6 +98,22 @@ namespace Bubbles
             drawer.Render();
             Canvas.Invalidate();
             
+        }
+
+        private void add_bubble(Obj obj) 
+        {
+            if (obj.Id > latest_id)
+                latest_id = obj.Id;
+
+            if (obj is  Bubble bubble) 
+            {
+                checkedListBox1.Items.Add(bubble.Id.ToString() + " пузырёк");
+            }
+            else if (obj is CombinedBubble c)
+            {
+                checkedListBox1.Items.Add(c.Id.ToString() + " кластер");
+            }
+            checkedListBox1.Invalidate();
         }
 
         private void ColorButton_Click(object sender, EventArgs e)
@@ -112,7 +148,10 @@ namespace Bubbles
                 MessageBox.Show("Радиус пузыря должен быть числом с плавающей точкой.");
                 return;
             }
-            //drawer.AddSphere(new SphericalSegment(new Vector3D(ox, oy, oz), r, ColorButton.BackColor, 500, 0.5, 0.7, 1.5));
+            latest_id++;
+            Bubble new_bubble = new Bubble(latest_id, new Vector3D(ox, oy, oz), r, ColorButton.BackColor, 500, 0.5);
+            drawer.AddSphere(new_bubble);
+            add_bubble(new_bubble);
             drawer.Render();
             Canvas.Invalidate();
         }
@@ -124,18 +163,20 @@ namespace Bubbles
 
         private void ClearSceneButton_Click(object sender, EventArgs e)
         {
-            drawer = new Renderer(1, 1, new Vector3D(0, 0, 0), 3, Canvas.Width, Canvas.Height);
+            drawer = new Renderer(1, 1, ViewPoint, 1, W, H);
             drawer.AddLight(new Light(Light.light_type.AMBIENT, 0.2, new Vector3D(0, 0, 0)));
             drawer.AddLight(new Light(Light.light_type.POINT, 0.6, new Vector3D(2, 1, 0)));
             drawer.AddLight(new Light(Light.light_type.DIRECTIONAL, 0.2, new Vector3D(1, 4, 4)));
             Canvas.Image = drawer.Canvas_Buffer;
 
-            ColorButton.BackColor = System.Drawing.Color.Magenta;
+            ColorButton.BackColor = System.Drawing.Color.Red;
 
             OxTextBox.Text = "0";
             OyTextBox.Text = "0";
-            OzTextBox.Text = "0";
+            OzTextBox.Text = "3";
             RTextBox.Text = "1";
+            checkedListBox1.Items.Clear();
+            latest_id = 0;
 
             drawer.Clean();
             Canvas.Invalidate();
@@ -147,6 +188,175 @@ namespace Bubbles
             drawer.ViewportSize = trackBar1.Value;
             drawer.Render();
             Canvas.Invalidate();
+        }
+
+        static int ExtractLeadingNumber(string input)
+        {
+            Match match = Regex.Match(input, @"^\d+");
+            if (match.Success)
+                return int.Parse(match.Value);
+            return -1;
+        }
+        private void Canvas_MouseDown(object sender, MouseEventArgs e)
+        {   
+            initial_cursor = new Vector3D(e.X, e.Y, 0);
+            buf_copy = drawer.Canvas_Buffer.Clone(new Rectangle(0, 0, drawer.Canvas_Buffer.Width, drawer.Canvas_Buffer.Height), 
+                                                  drawer.Canvas_Buffer.PixelFormat);
+            
+            Bitmap buf = buf_copy.Clone(new Rectangle(0, 0, buf_copy.Width, buf_copy.Height), buf_copy.PixelFormat);
+            Canvas.Image = buf;
+            Graphics g = Graphics.FromImage(buf);
+            int W = buf.Width;
+            int H = buf.Height;
+            
+
+            double scaleFactor = (double)(W) / 1.0; // Определяем коэффициент масштабирования
+
+            CheckedListBox.CheckedItemCollection o = checkedListBox1.CheckedItems;
+            contours = new List<Contour>(); 
+            for (int i = 0; i < o.Count; i++) 
+            {
+                String str = (String)o[i];
+                int number = ExtractLeadingNumber(str);
+                for (int j = 0; j < drawer.SpheresCount(); j++) 
+                {
+                    if (drawer.Spheres(j).Id == number)
+                    {
+                        Obj obj = drawer.Spheres(j);
+                        List<Bubble> bubbles = new List<Bubble>(); 
+                        if (obj is Bubble bubble)
+                            bubbles.Add(bubble);
+                        else if (obj is CombinedBubble cluster)
+                        {
+                            bubbles.Add(cluster.Bubble1);
+                            bubbles.Add(cluster.Bubble2);
+                        }
+                        for (int t = 0; t < bubbles.Count; t++)
+                        {
+                            Vector3D center = bubbles[t].Center;
+                            double radius = bubbles[t].Radius;
+
+                            double distance = center.Z - ViewPoint.Z;
+
+                            // Масштабируем радиус в зависимости от расстояния до экрана
+                            double radius_from_physics = radius * (1.0 / distance); // Применяем перспективу
+
+                            // Преобразуем 3D координаты в 2D
+                            double x_from_p = center.X * (1.0 / distance);
+                            double y_from_p = center.Y * (1.0 / distance);
+                            int x = (int)(W / 2 + x_from_p * scaleFactor);
+                            int y = (int)(H / 2 - y_from_p * scaleFactor);
+
+                            // Рисуем круг
+                            int r = (int)(scaleFactor * radius_from_physics); // Преобразуем радиус в пиксели
+                            g.DrawEllipse(Pens.Red, x - r, y - r, r * 2, r * 2);
+                            
+                            contours.Add(new Contour(number, new Vector3D(x, y, 0), r, t));
+                        }
+                        break;    
+                    } 
+                }
+            }
+            Canvas.Invalidate();
+        }
+
+        private void Canvas_MouseMove(object sender, MouseEventArgs e)
+        {
+            /*double distance = 3 - ViewPoint.Z;
+            double scaleFactor = (double)(W) / 1.0; // Определяем коэффициент масштабирования
+
+            double x_from_p = (e.X - W / 2) / scaleFactor;
+            double y_from_p = (H / 2 - e.Y) / scaleFactor;
+
+            double actual_x = x_from_p / (1.0 / distance);
+            double actual_y = y_from_p / (1.0 / distance);
+            
+            toolStripStatusLabel1.Text = $"x: {actual_x}, y: {actual_y}";*/
+            toolStripStatusLabel1.Text = e.Location.ToString();
+
+            if (contours.Count > 0)
+            {
+                Bitmap buf = buf_copy.Clone(new Rectangle(0, 0, buf_copy.Width, buf_copy.Height), buf_copy.PixelFormat);
+                Canvas.Image = buf;
+                Graphics g = Graphics.FromImage(buf);
+
+                int shift_x = e.X - (int)initial_cursor.X;
+                int shift_y = e.Y - (int)initial_cursor.Y;
+                foreach (Contour c in contours) 
+                {
+                    g.DrawEllipse(Pens.Red, (float)(c.Center.X + shift_x - c.R), 
+                        (float)(c.Center.Y + shift_y - c.R), (float)c.R * 2, (float)c.R * 2);
+                }
+                Canvas.Invalidate();
+            }
+        }
+        /*private void position_bubbles()
+        {
+            for (int i = 0; i < drawer.SpheresCount(); i++)
+            {
+                for (int j = 0; j < drawer.SpheresCount(); j++)
+                {
+                    List<Obj> objs = CombinedBubble.PositionBubbles();
+                }
+            }
+        }*/
+        private void Canvas_MouseUp(object sender, MouseEventArgs e)
+        {
+            double scaleFactor = (double)(drawer.Canvas_Buffer.Width) / 1.0; // Определяем коэффициент масштабирования
+            int shift_x = e.X - (int)initial_cursor.X;
+            int shift_y = e.Y - (int)initial_cursor.Y;
+            Bitmap buf = buf_copy.Clone(new Rectangle(0, 0, buf_copy.Width, buf_copy.Height), buf_copy.PixelFormat);
+            Canvas.Image = buf;
+            Graphics g = Graphics.FromImage(buf);
+            int W = buf.Width;
+            int H = buf.Height;
+
+            int k = 0;
+            if (contours.Count > 0)
+            {
+                foreach (Contour c in contours)
+                {
+                    int id = c.Id;
+                    double x = c.Center.X + shift_x;
+                    double y = c.Center.Y + shift_y;
+                    double x_from_p = (x - W / 2) / scaleFactor;
+                    double y_from_p = (H / 2 - y) / scaleFactor;
+                    for (int i = 0; i < drawer.SpheresCount(); i++) 
+                    {
+                        if (drawer.Spheres(i).Id == id) 
+                        {
+                            if (drawer.Spheres(i) is Bubble b)
+                            {
+                                double distance = b.Center.Z - ViewPoint.Z;
+
+                                double actual_x = x_from_p / (1.0 / distance);
+                                double actual_y = y_from_p / (1.0 / distance);
+
+                                drawer.SpheresChangeCenter(i, new Vector3D(actual_x, actual_y, b.Center.Z), 0);
+                            }
+                            else if (drawer.Spheres(i) is CombinedBubble cb)
+                            {
+                                k = k % 2;
+                                Bubble bubble = (k == 0) ? cb.Bubble1 : cb.Bubble2;
+                                double distance = bubble.Center.Z - ViewPoint.Z;
+
+                                double actual_x = x_from_p / (1.0 / distance);
+                                double actual_y = y_from_p / (1.0 / distance);
+
+                                drawer.SpheresChangeCenter(i, new Vector3D(actual_x, actual_y, bubble.Center.Z), k);
+                                k++;
+                            }
+                        }
+                    }
+                }
+                contours = new List<Contour>();
+                drawer.Render();
+                buf_copy = drawer.Canvas_Buffer.Clone(new Rectangle(0, 0, drawer.Canvas_Buffer.Width, drawer.Canvas_Buffer.Height),
+                                                  drawer.Canvas_Buffer.PixelFormat);
+                //buf_copy.Save("copy2.jpg");
+                Canvas.Image = drawer.Canvas_Buffer;
+                Canvas.Invalidate();
+            }
         }
     }
     
