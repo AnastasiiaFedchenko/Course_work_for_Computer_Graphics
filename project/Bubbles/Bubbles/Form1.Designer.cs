@@ -120,10 +120,11 @@
             // trackBar1
             // 
             this.trackBar1.Location = new System.Drawing.Point(0, 484);
+            this.trackBar1.Minimum = -10;
             this.trackBar1.Name = "trackBar1";
             this.trackBar1.Size = new System.Drawing.Size(308, 90);
             this.trackBar1.TabIndex = 2;
-            this.trackBar1.Value = 1;
+            this.trackBar1.Value = -4;
             this.trackBar1.Scroll += new System.EventHandler(this.trackBar1_Scroll);
             // 
             // ClearSceneButton

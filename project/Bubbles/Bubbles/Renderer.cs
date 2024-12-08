@@ -75,11 +75,22 @@ namespace Bubbles
                 else if (k == 1) cb.Bubble2.Center = c;
             }
         }
+        public void ChangeSphere(int id, Obj obj)
+        {
+            for (int i = 0; i < spheres.Count; i++) 
+            { 
+                if (spheres[i].Id == id)
+                {
+                    spheres[i] = obj;
+                    return;
+                }
+            }
+        }
         public int SpheresCount() { return spheres.Count; }
         public void AddSphere(Obj s) { spheres.Add(s); }
 
         public int ViewportSize { get { return viewport_size; }  set { viewport_size = value; } }
-
+        public Vector3D CameraPosition { get { return camera_position; } set {  camera_position = value; } }
         public void Clean() {
             g.FillRectangle(new SolidBrush(background_color),
                 0, 0, canvas_buffer.Width, canvas_buffer.Height);

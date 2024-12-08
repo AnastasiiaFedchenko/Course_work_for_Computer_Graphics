@@ -48,17 +48,39 @@ namespace Bubbles
             direction.Normalize();
             Vector3D perpendicular = Vector3D.CrossProduct(direction, new Vector3D(1, 0, 0));
             if (perpendicular.Length < 0.01f) // Если направление совпадает с осью X
-            {
                 perpendicular = Vector3D.CrossProduct(direction, new Vector3D(0, 1, 0));
-            }
+
             perpendicular.Normalize();
             perpendicular = perpendicular * h;
 
             Vector3D point = P2 + perpendicular * (float)Math.Cos(0) + Vector3D.CrossProduct(direction, perpendicular) * (float)Math.Sin(0);
             
-            res.Add(P2);
-            res.Add(point);
+            res.Add(P2); // центр окружности пересечения
+            res.Add(point); // точка на окружности
             return res;
+        }
+        private static List<Vector3D> GetIntersectionPoint(CombinedBubble cb, Bubble b)
+        {
+            /*
+             * Эта функция проверяет на пересечение пузырьковый кластер и отдельный пузырёк.
+             * Отдельно проверяется пересечение с каждой частью кластера.
+             * Далее 
+             * - если отдельный пузырёк пересекается только с один пузырьком из кластера,
+             *   то мы возвращаем это пересечение;
+             * - если пересечений нет, то возвращает массив с двумя точками в + бесконечности;
+             * - если точек пересечения две, возвращаем null как индикатор ошибки.
+             */
+
+            List<Vector3D> res1 = GetIntersectionPoint(cb.Bubble1, b);
+            List<Vector3D> res2 = GetIntersectionPoint(cb.Bubble2, b);
+            if (res1[0].X == double.PositiveInfinity && res2[0].X != double.PositiveInfinity)
+                return res2;
+            else if (res1[0].X != double.PositiveInfinity && res2[0].X == double.PositiveInfinity)
+                return res1;
+            else if (res1[0].X == double.PositiveInfinity && res2[0].X == double.PositiveInfinity)
+                return res1;
+            else 
+                return null;
         }
 
         private static double ContactAngle(Bubble b1, Bubble b2)
@@ -109,7 +131,7 @@ namespace Bubbles
             Console.WriteLine("Пузыри слиты в один большой пузырь.");
             return b1;
         }
-        private static List<Bubble> PushBubblesApart(Bubble b1, Bubble b2)
+        private static List<Bubble> PushBubblesApart(Bubble b1, Bubble b2, bool from_combined)
         {
             List<Bubble> res = new List<Bubble>();
             if (b1 == null || b2 == null)
@@ -131,10 +153,16 @@ namespace Bubbles
                 direction.Normalize();
 
                 double pushDistance = requiredDistance - currentDistance;
-
-                b1.Center -= direction * (pushDistance / 2); // Отталкиваем первый пузырь
-                b2.Center += direction * (pushDistance / 2); // Отталкиваем второй пузырь
-
+                if (from_combined)
+                {
+                    b2.Center += direction * (pushDistance + 0.0000002); // Отталкиваем второй пузырь
+                }
+                else
+                {
+                    b1.Center -= (direction * (pushDistance / 2 + 0.0000001)); // Отталкиваем первый пузырь
+                    b2.Center += direction * (pushDistance / 2 + 0.0000001); // Отталкиваем второй пузырь
+                }
+                
                 Console.WriteLine("Пузыри оттолкнуты друг от друга.");
             }
             else
@@ -274,28 +302,90 @@ namespace Bubbles
             Console.WriteLine($"height {height}");
             return height;
         }
-        public static List<Obj> PositionBubbles(Bubble b1, Bubble b2)
+
+        public static List<Obj> PositionBubbles(Bubble b1, Bubble b2, bool from_combined/*, ref int what_happend*/)
         {
             double contactAngle = ContactAngle(b1, b2);
             List<Obj> res = new List<Obj>();
+            if (contactAngle.Equals(double.NaN))
+                return null;
             if (contactAngle < 55.0) // слияние в один большой пузырь
             {
+                //what_happend = 1;
                 Bubble res_b = MergeBubbles(b1, b2);
                 res.Add(res_b);
             }
             else if (contactAngle > 65.0) // отталкивание
             {
-                List<Bubble> bubbles = PushBubblesApart(b1, b2);
+                List<Bubble> bubbles = PushBubblesApart(b1, b2, from_combined);
                 res.Add(bubbles[0]);
                 res.Add(bubbles[1]);
             }
-            else // образование класстера
+            else // образование кластера
             {
                 CombinedBubble cluster = new CombinedBubble(b1.Id, b1, b2);
                 cluster.CreateClusters();
                 res.Add(cluster);
             }
             return res;
+        }
+
+        public static int AmountOfContacts(Obj o1, Obj o2)
+        {
+            List<Vector3D> res1 = new List<Vector3D>();   
+            List<Vector3D> res2 = new List<Vector3D>();
+            int count = 0;
+            if (o1 is CombinedBubble cb)
+            {
+
+                if (o2 is Bubble b)                    // кластер и пузырёк
+                {
+                    res1 = GetIntersectionPoint(cb, b);
+                    if (res1 == null)
+                    {
+                        count = -1;
+                        return count;
+                    }
+                    else if (res1[0].X != double.PositiveInfinity)
+                        count++;
+                }
+                else if (o2 is CombinedBubble cb2)     // два кластера
+                {
+                    res1 = GetIntersectionPoint(cb, cb2.Bubble1);
+                    res2 = GetIntersectionPoint(cb, cb2.Bubble2);
+                    if (res1 == null || res2 == null) // если одна из частей одного кластера пересекается с другим кластером дважды
+                    {
+                        count = -1;
+                        return count;
+                    }
+                    if (res1[0].X != double.PositiveInfinity || res2[0].X != double.PositiveInfinity) // если вообще есть пересечения
+                    {
+                        count = -1;
+                        return count;
+                    }
+                }  
+            }
+            else if (o1 is Bubble b1)
+            {
+                if (o2 is Bubble b2)
+                {
+                    res1 = GetIntersectionPoint(b1, b2);
+                    if (res1[0].X != double.PositiveInfinity)
+                        count++;
+                }
+                else if (o2 is CombinedBubble cb2)
+                {
+                    res1 = GetIntersectionPoint(cb2, b1);
+                    if (res1 == null)
+                    {
+                        count = -1;
+                        return count;
+                    }
+                    else if (res1[0].X != double.PositiveInfinity)
+                        count++;
+                }
+            }
+            return count;                
         }
 
         public Bubble Bubble1 { get => bubble1; }
