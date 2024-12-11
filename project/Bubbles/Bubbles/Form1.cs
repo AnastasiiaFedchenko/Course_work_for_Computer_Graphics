@@ -228,50 +228,50 @@ namespace Bubbles
             double scaleFactor = (double)(W) / 1.0; // Определяем коэффициент масштабирования
 
             CheckedListBox.CheckedItemCollection o = checkedListBox1.CheckedItems;
-            contours = new List<Contour>(); 
-            for (int i = 0; i < o.Count; i++) 
+            contours = new List<Contour>();
+            if (o.Count <= 0) return;
+
+            String str = (String)o[0];
+            int number = ExtractLeadingNumber(str);
+            for (int j = 0; j < drawer.SpheresCount(); j++)
             {
-                String str = (String)o[i];
-                int number = ExtractLeadingNumber(str);
-                for (int j = 0; j < drawer.SpheresCount(); j++) 
+                if (drawer.Spheres(j).Id != number)
+                    continue;
+
+                Obj obj = drawer.Spheres(j);
+                List<Bubble> bubbles = new List<Bubble>();
+                if (obj is Bubble bubble)
+                    bubbles.Add(bubble);
+                else if (obj is CombinedBubble cluster)
                 {
-                    if (drawer.Spheres(j).Id == number)
-                    {
-                        Obj obj = drawer.Spheres(j);
-                        List<Bubble> bubbles = new List<Bubble>(); 
-                        if (obj is Bubble bubble)
-                            bubbles.Add(bubble);
-                        else if (obj is CombinedBubble cluster)
-                        {
-                            bubbles.Add(cluster.Bubble1);
-                            bubbles.Add(cluster.Bubble2);
-                        }
-                        for (int t = 0; t < bubbles.Count; t++)
-                        {
-                            Vector3D center = bubbles[t].Center;
-                            double radius = bubbles[t].Radius;
-
-                            double distance = center.Z - ViewPoint.Z;
-
-                            // Масштабируем радиус в зависимости от расстояния до экрана
-                            double radius_from_physics = radius * (1.0 / distance); // Применяем перспективу
-
-                            // Преобразуем 3D координаты в 2D
-                            double x_from_p = center.X * (1.0 / distance);
-                            double y_from_p = center.Y * (1.0 / distance);
-                            int x = (int)(W / 2 + x_from_p * scaleFactor);
-                            int y = (int)(H / 2 - y_from_p * scaleFactor);
-
-                            // Рисуем круг
-                            int r = (int)(scaleFactor * radius_from_physics); // Преобразуем радиус в пиксели
-                            g.DrawEllipse(Pens.Red, x - r, y - r, r * 2, r * 2);
-                            
-                            contours.Add(new Contour(number, new Vector3D(x, y, 0), r, t));
-                        }
-                        break;    
-                    } 
+                    bubbles.Add(cluster.Bubble1);
+                    bubbles.Add(cluster.Bubble2);
                 }
+                for (int t = 0; t < bubbles.Count; t++)
+                {
+                    Vector3D center = bubbles[t].Center;
+                    double radius = bubbles[t].Radius;
+
+                    double distance = center.Z - ViewPoint.Z;
+
+                    // Масштабируем радиус в зависимости от расстояния до экрана
+                    double radius_from_physics = radius * (1.0 / distance); // Применяем перспективу
+
+                    // Преобразуем 3D координаты в 2D
+                    double x_from_p = center.X * (1.0 / distance);
+                    double y_from_p = center.Y * (1.0 / distance);
+                    int x = (int)(W / 2 + x_from_p * scaleFactor);
+                    int y = (int)(H / 2 - y_from_p * scaleFactor);
+
+                    // Рисуем круг
+                    int r = (int)(scaleFactor * radius_from_physics); // Преобразуем радиус в пиксели
+                    g.DrawEllipse(Pens.Red, x - r, y - r, r * 2, r * 2);
+
+                    contours.Add(new Contour(number, new Vector3D(x, y, 0), r, t));
+                }
+                break;
             }
+        
             Canvas.Invalidate();
         }
 
@@ -305,15 +305,9 @@ namespace Bubbles
                 Canvas.Invalidate();
             }
         }
-        private int position_bubbles(int n)
+        
+        private List<List<int>> counting_contacts(ref bool any_intersection, ref bool any_more_than_2)
         {
-            if (n <= 0)
-            {
-                Console.WriteLine("Превышен лимит рекурсии.");
-                return -1;
-            }
-            bool any_intersection = false;
-            bool any_more_than_2 = false;
             List<List<int>> a = new List<List<int>>();
             List<int> count = new List<int>(); // построчная сумма a
 
@@ -327,27 +321,22 @@ namespace Bubbles
             for (int i = 0; i < drawer.SpheresCount(); i++)
             {
                 count.Add(0);
-                for (int j = 0;  j < drawer.SpheresCount(); j++)
+                for (int j = 0; j < drawer.SpheresCount(); j++)
                 {
-                    if (i != j)
+                    if (i == j) continue;
+                    
+                    int res = CombinedBubble.AmountOfContacts(drawer.Spheres(i), drawer.Spheres(j));
+                    a[i][j] = res;
+                    if (res == -1)
+                        count[i] += 2;
+                    else
                     {
-                        int res = CombinedBubble.AmountOfContacts(drawer.Spheres(i), drawer.Spheres(j));
-                        if (res == -1)
+                        if (res == 1)
                         {
-                            //Console.WriteLine("ERROR! more then one contact");
-                            a[i][j] = res;
-                            count[i] += 2; // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                            Console.WriteLine($"id: {drawer.Spheres(i).Id} касается id: {drawer.Spheres(j).Id}");
+                            any_intersection = true;
                         }
-                        else
-                        {
-                            if (res == 1)
-                            {
-                                Console.WriteLine($"id: {drawer.Spheres(i).Id} касается id: {drawer.Spheres(j).Id}");
-                                any_intersection = true;
-                            }
-                            a[i][j] = res;
-                            count[i] += res;
-                        }
+                        count[i] += res;
                     }
                 }
                 if (count[i] >= 2)
@@ -357,7 +346,115 @@ namespace Bubbles
             for (int i = 0; i < count.Count; i++)
                 Console.Write($"{count[i]} ");
             Console.Write("\n");
-            
+
+            return a;
+        }
+        private int position_two_bubbles(int i, int j, Bubble b1, Bubble b2)
+        {
+            int id1 = drawer.Spheres(i).Id;
+            int id2 = drawer.Spheres(j).Id;
+            List<Obj> r = new List<Obj>();
+            r = CombinedBubble.PositionBubbles(b1, b2, false);
+            for (int k = 0; r != null && k < r.Count; k++)
+                drawer.ChangeSphere(r[k].Id, r[k]);
+            if (r != null && r.Count == 1)
+            {
+                if (r[0].Id == id1)
+                    drawer.DeleteSphere(id2);
+                else
+                    drawer.DeleteSphere(id1);
+            }
+
+            return 0;
+        }
+        private int position_cluster_and_bubble(int i, int j, CombinedBubble cb, Bubble b)
+        {
+            List<Obj> r1 = new List<Obj>();
+            List<Obj> r2 = new List<Obj>();
+            int id1 = drawer.Spheres(i).Id;
+            int id2 = drawer.Spheres(j).Id;
+
+            r1 = CombinedBubble.PositionBubbles(cb.Bubble1, b, true);
+            r2 = CombinedBubble.PositionBubbles(cb.Bubble2, b, true);
+            if (r1 == null && r2 == null) // ситуация с тройным кластером
+            {
+                MessageBox.Show(
+                    $"Угол соприкосновения принадлежит [55°, 65°]. Невозможно образование кластера из трёх пузырей.",
+                    "ERROR");
+                Console.WriteLine("ERROR! 3 bubble cluster");
+                return -1;
+            }
+            else if (r1 != null && r2 == null && r1.Count == 1 && r1[0] is Bubble) // произошло объединение пузырька b с cb.Bubble1
+            {
+                r1 = CombinedBubble.PositionBubbles((Bubble)r1[0], cb.Bubble2, false); // проверяем позицию нового пузыря относительно cb.Bubble2
+                if (r1.Count == 2)
+                {
+                    r1[0].Id = id1;
+                    r1[1].Id = id2;
+                }
+                else if (r1.Count == 1)
+                {
+                    if (r1[0].Id == id1)
+                        drawer.DeleteSphere(id2);
+                    else
+                        drawer.DeleteSphere(id1);
+                }
+            }
+            else if (r2 != null && r1 == null && r2.Count == 1 && r2[0] is Bubble) // произошло объединение пузырька b с cb.Bubble2
+            {
+                r2 = CombinedBubble.PositionBubbles((Bubble)r2[0], cb.Bubble1, false); // проверяем позицию нового пузыря относительно cb.Bubble1
+                if (r2.Count == 2)
+                {
+                    r2[0].Id = id1;
+                    r2[1].Id = id2;
+                }
+                else if ( r2.Count == 1)
+                {
+                    if (r2[0].Id == id1)
+                        drawer.DeleteSphere(id2);
+                    else
+                        drawer.DeleteSphere(id1);
+                }
+            }
+            else if (r1 != null && r2 == null && r1.Count == 2 && r1[0] is Bubble && r1[1] is Bubble) // произошло отталкивание пузырька b от cb.Bubble1
+            {
+                // r1[0] - это пузырёк являющийся частью кластера, cb.Bubble1
+                Bubble bb = (Bubble)r1[0];
+                Vector3D dist = cb.Bubble1.Center - bb.Center;
+                cb.Bubble2.Center = cb.Bubble2.Center + dist;
+                List<Obj> res = CombinedBubble.PositionBubbles((Bubble)r1[0], cb.Bubble2, false);
+                if (res != null && res.Count == 1 && res[0] is CombinedBubble)
+                    r1[0] = res[0];
+            }
+            else if (r2 != null && r1 == null && r2.Count == 2 && r2[0] is Bubble && r2[1] is Bubble) // произошло отталкивание пузырька b от cb.Bubble2
+            {
+                // r2[0] - это пузырёк являющийся частью кластера, cb.Bubble2
+                Bubble bb = (Bubble)r2[0];
+                Vector3D dist = cb.Bubble2.Center - bb.Center;
+                cb.Bubble1.Center = cb.Bubble1.Center + dist;
+                List<Obj> res = CombinedBubble.PositionBubbles((Bubble)r2[0], cb.Bubble1, false);
+                if (res != null && res.Count == 1 && res[0] is CombinedBubble)
+                    r2[0] = res[0];
+            }
+
+            for (int k = 0; r1 != null && k < r1.Count; k++)
+                drawer.ChangeSphere(r1[k].Id, r1[k]);
+            for (int k = 0; r2 != null && k < r2.Count; k++)
+                drawer.ChangeSphere(r2[k].Id, r2[k]);
+
+            return 0;
+        }
+        private int position_bubbles(int n)
+        {
+            if (n <= 0)
+            {
+                Console.WriteLine("Превышен лимит рекурсии.");
+                return -1;
+            }
+            bool any_intersection = false;
+            bool any_more_than_2 = false;
+            List<List<int>> a = counting_contacts(ref any_intersection, ref  any_more_than_2);
+           
             if (any_more_than_2)
             {
                 Console.WriteLine("Больше чем 2 пересечения.");
@@ -373,69 +470,20 @@ namespace Bubbles
             }
             else
             {
-                List<Obj> r1 = new List<Obj>();
-                List<Obj> r2 = new List<Obj>();
                 for (int i = 0; i < a.Count; i++)
                     for (int j = 0; j < a[i].Count; j++)
                     {
                         if (a[i][j] == 1)
                         {
-                            int id1 = drawer.Spheres(i).Id;
-                            int id2 = drawer.Spheres(j).Id;
-                            if (drawer.Spheres(i) is Bubble b1 && drawer.Spheres(j) is Bubble b2)
-                                r1 = CombinedBubble.PositionBubbles(b1, b2, false);
-                            else if (drawer.Spheres(i) is CombinedBubble cb1 && drawer.Spheres(j) is Bubble b3)
-                            {
-                                r1 = CombinedBubble.PositionBubbles(cb1.Bubble1, b3, true);
-                                r2 = CombinedBubble.PositionBubbles(cb1.Bubble2, b3, true);
-                                if (r1 == null && r2 == null)
-                                {
-                                    Console.WriteLine("ERROR! 3 bubble cluster");
-                                    return -1;
-                                }
-                                else if (r1 != null && r2 == null && r1.Count == 1 && r1[0] is Bubble b)
-                                {
-                                    r1 = CombinedBubble.PositionBubbles(b, cb1.Bubble2, false);
-                                }
-                                else if (r2 != null && r1 == null && r2.Count == 1 && r2[0] is Bubble bb)
-                                {
-                                    /*if (bb.Id != cb1.Id)
-                                        bb.Id = cb1.Id;*/
-                                    r2 = CombinedBubble.PositionBubbles(bb, cb1.Bubble1, false);
-                                    if (r2.Count == 2)
-                                    {
-                                        r2[0].Id = id1;
-                                        r2[1].Id = id2;
-                                    }
-                                }
-                                /*if (r1 == null && r2.Count == 1)
-                                {
-                                    r2 = CombinedBubble.PositionBubbles(cb1.Bubble1, r2[0], false);
-                                }*/
-                            }
+                            int rc = 0;
+                            if (drawer.Spheres(i) is Bubble && drawer.Spheres(j) is Bubble)
+                                rc = position_two_bubbles(i, j, (Bubble)drawer.Spheres(i), (Bubble)drawer.Spheres(j));
+                            else if (drawer.Spheres(i) is CombinedBubble && drawer.Spheres(j) is Bubble)
+                                rc = position_cluster_and_bubble(i, j, (CombinedBubble)drawer.Spheres(i), (Bubble)drawer.Spheres(j));
                             else if (drawer.Spheres(i) is Bubble b4 && drawer.Spheres(j) is CombinedBubble cb2)
-                            {
-                                r1 = CombinedBubble.PositionBubbles(cb2.Bubble1, b4, true);
-                                r2 = CombinedBubble.PositionBubbles(cb2.Bubble2, b4, true);
-                            }
-                            for (int k = 0; r1 != null && k < r1.Count; k++)
-                                drawer.ChangeSphere(r1[k].Id, r1[k]);
-                            for (int k = 0; r2 != null && k < r2.Count; k++)
-                                drawer.ChangeSphere(r2[k].Id, r2[k]);
-                            if (r1 != null && r1.Count == 1) 
-                            {
-                                if (r1[0].Id == id1)
-                                    drawer.DeleteSphere(id2);
-                                else 
-                                    drawer.DeleteSphere(id1);
-                            }
-                            if (r2 != null && r2.Count == 1) 
-                                        {
-                                if (r2[0].Id == id1)
-                                    drawer.DeleteSphere(id2);
-                                else
-                                    drawer.DeleteSphere(id1);
-                            }
+                                rc = position_cluster_and_bubble(j, i, (CombinedBubble)drawer.Spheres(j), (Bubble)drawer.Spheres(i));
+                            if (rc == -1)
+                                return -1;
                             a[i][j] = 0;
                             a[j][i] = 0;
                             position_bubbles(n);

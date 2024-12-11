@@ -327,9 +327,9 @@ namespace Bubbles
             {
                 if (from_combined)
                 {
-                    MessageBox.Show(
+                    /*MessageBox.Show(
                     $"Угол равен {contactAngle}. Невозможно образование кластера из трёх пузырей.",
-                    "ERROR");
+                    "ERROR");*/
                     return null;
                 }
                 CombinedBubble cluster = new CombinedBubble(b1.Id, b1, b2);
