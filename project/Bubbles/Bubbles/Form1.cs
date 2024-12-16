@@ -43,66 +43,27 @@ namespace Bubbles
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            /*drawer.AddSphere(new Bubble(new Vector3D(0, 0, 0), 2, System.Drawing.Color.Orange, 32, 0.1, 0.7, 1));
-            drawer.AddSphere(new Bubble(new Vector3D(0, 1, 0), 2, System.Drawing.Color.Red, 32, 0.1, 0.7, 1));*/
-
-            //drawer.AddSphere(new Bubble(new Vector3D(0, -1, 3), 1, System.Drawing.Color.FromArgb(255, 0, 0), 500, 0.2));
             Bubble bubble1 = new Bubble(1, new Vector3D(-2.2, -0.65, 3), 0.75, System.Drawing.Color.FromArgb(0, 255, 0), 500, 0.4);
             Bubble bubble2 = new Bubble(2, new Vector3D(-2.5, 0.25, 3), 1, System.Drawing.Color.FromArgb(0, 0, 255), 500, 0.3);
 
             List<Obj> res1 = CombinedBubble.PositionBubbles(bubble1, bubble2, false);
             for (int i = 0; i < res1.Count; i++)
                 if (res1[i] != null) 
-                { 
                     drawer.AddSphere(res1[i]);
-                    //add_bubble(res1[i]);
-                }
 
             Bubble bubble3 = new Bubble(3, new Vector3D(2, -1, 3), 1, System.Drawing.Color.HotPink, 500, 0.4);
             Bubble bubble4 = new Bubble(4, new Vector3D(1, 0.25, 3), 1, System.Drawing.Color.Violet, 500, 0.3);
 
-            //List<Obj> res3 = CombinedBubble.PositionBubbles(bubble1, bubble4, false);
-
-            /*drawer.AddSphere(bubble1);
-            drawer.AddSphere(bubble2);  
-            drawer.AddSphere(bubble3);
-            drawer.AddSphere(bubble4);*/
-
             List<Obj> res2 = CombinedBubble.PositionBubbles(bubble3, bubble4, false);
             for (int i = 0; i < res2.Count; i++)
                 if (res2[i] != null)
-                {
                     drawer.AddSphere(res2[i]);
-                    //add_bubble(res2[i]);
-                }
             Bubble bubble5 = new Bubble(5, new Vector3D(-1.5, 0.75, 3), 0.75, System.Drawing.Color.FromArgb(255, 0, 0), 500, 0.4);
             drawer.AddSphere(bubble5);
-            //add_bubble(bubble5);
+
             int rc = position_bubbles(3);
 
             bubbles_checked_list();
-
-            /*Bubble bubble1 = new Bubble(new Vector3D(0, 0, 0), 2, System.Drawing.Color.Orange, 32, 0.2);
-            Bubble bubble2 = new Bubble(new Vector3D(0, 2, 0), 2, System.Drawing.Color.Red, 10, 0.4);
-
-            CombinedBubble combinedBubble = new CombinedBubble(bubble1, bubble2);
-
-            drawer.AddSphere(combinedBubble.Bubble1);
-            if (combinedBubble.Bubble2 != null)
-                drawer.AddSphere(combinedBubble.Bubble2);*/
-
-
-            //drawer.AddSphere(new SphericalSegment(new Vector3D(0, 0, 3), 2, 2, new Vector3D(-1, 1, 0), System.Drawing.Color.Orange, 32, 0.1, 0.7, 1)); // Полная сфера
-            //drawer.AddSphere(new SphericalSegment(new Vector3D(0, 0, 3), 2, 0.75, new Vector3D(1, -1, 0), System.Drawing.Color.Orange, 32, 0.1, 0.7, 1)); // Полная сфера
-            //drawer.AddSphere(new SphericalSegment(new Vector3D(0, -1, 3), 2, 2.5, new Vector3D(1, 1, 0), System.Drawing.Color.Orange, 32, 0.1, 0.7, 1)); // Полупрозрачный оранжевый
-            /*drawer.AddSphere(new SphericalSegment(new Vector3D(-1, -1, 3), 2, 1.0, new Vector3D(0, 1, 0), System.Drawing.Color.Black, 32, 0.1, 0.7, 1)); // Полупрозрачный черный
-            drawer.AddSphere(new SphericalSegment(new Vector3D(1, -1, 3), 2, 1.0, new Vector3D(0, 1, 0), System.Drawing.Color.Red, 32, 0.1, 0.7, 1)); // Полупрозрачный красный
-            *///drawer.AddSphere(new Sphere(new Vector3D(0, -1, 3), 2, System.Drawing.Color.FromArgb(128, 255, 165, 0), 80, 0.7));
-            //drawer.AddSphere(new Sphere(new Vector3D(0, -1, 3), 1.8, System.Drawing.Color.Yellow, 80, 0.7)); // Внутренняя стенка
-            //drawer.AddSphere(new Sphere(new Vector3D(-1, -1, 3), 2, System.Drawing.Color.FromArgb(128, 255, 0, 0), 80, 0.7));
-            //drawer.AddSphere(new Sphere(new Vector3D(-2, 0, 4), 1, System.Drawing.Color.Purple, 10, 0.1));
-            //drawer.AddSphere(new Sphere(new Vector3D(2, 0, 4), 1, System.Drawing.Color.Blue, 500, 0.3));
-            //drawer.AddSphere(new Sphere(new Vector3D(0, -5001, 0), 5000, System.Drawing.Color.Yellow, 1000, 0.5));
 
             drawer.AddLight(new Light(Light.light_type.AMBIENT, 0.1, new Vector3D(0, 0, 0)));
             drawer.AddLight(new Light(Light.light_type.POINT, 0.8, new Vector3D(2, 1, 0)));
@@ -493,13 +454,11 @@ namespace Bubbles
             
             return position_bubbles(n - 1);
         }
-
         private void checkedListBox1_ItemCheck(object sender, ItemCheckEventArgs e)
         {
             for (int ix = 0; ix < checkedListBox1.Items.Count; ++ix)
                 if (ix != e.Index) checkedListBox1.SetItemChecked(ix, false);
         }
-
         private void Canvas_MouseUp(object sender, MouseEventArgs e)
         {
             double scaleFactor = (double)(drawer.Canvas_Buffer.Width) / 1.0; // Определяем коэффициент масштабирования

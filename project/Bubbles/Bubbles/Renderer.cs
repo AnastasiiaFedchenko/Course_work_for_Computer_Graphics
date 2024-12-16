@@ -125,7 +125,6 @@ namespace Bubbles
 
         Vector3D ReflectRay(Vector3D a, Vector3D b) { return b * (2 * Vector3D.DotProduct(a, b)) - a; }
 
-        public delegate System.Drawing.Color ThreadTraceRay(Vector3D origin, Vector3D direction, double min_t, double max_t, int depth);
         System.Drawing.Color TraceRay(Object obj)
         {
             if (obj is TraceRayArgs args)

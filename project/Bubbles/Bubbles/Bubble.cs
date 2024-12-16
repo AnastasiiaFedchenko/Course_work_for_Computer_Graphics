@@ -63,7 +63,7 @@ namespace Bubbles
 
         public Circle3D Membrane { get { return  membrane; } set { this.membrane = value; } }
         public Vector3D MembraneNormal { get { return membrane.Normal; } set { this.membrane.Normal = value; } }
-        public Vector3D MembraneCenter { get { return membrane.Center; } }
+        //public Vector3D MembraneCenter { get { return membrane.Center; } }
         public Double MembraneRadius { get { return membrane.Radius; } }
 
         public Color Color_mul(double n)
@@ -73,12 +73,12 @@ namespace Bubbles
                                   (byte)Math.Min(255, (this.color.B * n)));
         }
 
-        public Color Color_add(Color temp)
+        /*public Color Color_add(Color temp)
         {
             return Color.FromArgb((byte)Math.Min(255, this.color.R + temp.R),
                                   (byte)Math.Min(255, this.color.G + temp.G),
                                   (byte)Math.Min(255, this.color.B + temp.B));
-        }
+        }*/
 
         public int Specular { get => specular; set => specular = value; }
         public double Reflective { get => reflective; set => reflective = value; }

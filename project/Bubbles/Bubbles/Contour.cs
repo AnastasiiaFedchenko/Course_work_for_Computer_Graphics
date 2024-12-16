@@ -30,6 +30,6 @@ namespace Bubbles
         public int Id { get { return id; } }
         public Vector3D Center { get {  return center; } }
         public double R { get { return r; } }
-        public int K { get { return k; } }
+        //public int K { get { return k; } }
     }
 }

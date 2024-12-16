@@ -145,9 +145,7 @@ namespace Bubbles
             }
 
             Vector3D direction = b2.Center - b1.Center;
-
             double currentDistance = direction.Length;
-
             double requiredDistance = b1.Radius + b2.Radius;
 
             if (currentDistance < requiredDistance)
@@ -156,21 +154,18 @@ namespace Bubbles
 
                 double pushDistance = requiredDistance - currentDistance;
                 if (from_combined)
-                {
                     b2.Center += direction * (pushDistance + 0.0000002); // Отталкиваем второй пузырь
-                }
                 else
                 {
                     b1.Center -= (direction * (pushDistance / 2 + 0.0000001)); // Отталкиваем первый пузырь
                     b2.Center += direction * (pushDistance / 2 + 0.0000001); // Отталкиваем второй пузырь
                 }
-                
+                b1.Radius = b1.Radius;
+                b2.Radius = b2.Radius;
                 Console.WriteLine("Пузыри оттолкнуты друг от друга.");
             }
             else
-            {
                 Console.WriteLine("Пузыри уже находятся на необходимом расстоянии друг от друга.");
-            }
             res.Add(b1);
             res.Add(b2);
             return res;
@@ -187,8 +182,8 @@ namespace Bubbles
             // Находим точку пересечения
             List<Vector3D> Points = GetIntersectionPoint(bubble1, bubble2);
             Vector3D centerOfIntersect = Points[0];
-            Vector3D intersectionPoint = Points[1];
-            //Console.WriteLine(commonPoint);
+            /*Vector3D intersectionPoint = Points[1];
+
             if (intersectionPoint == new Vector3D(double.PositiveInfinity, double.PositiveInfinity, double.PositiveInfinity))
             {
                 Console.WriteLine("Сферы не пересекаются, кластеры не могут быть созданы.");
@@ -214,9 +209,9 @@ namespace Bubbles
 
             if (Math.Abs(angle - 60.0) > 0.01) // Если угол не равен 60 градусам
             {
-                Console.WriteLine("Угол между центрами не равен 60 градусам, кластеры не могут быть созданы.");
+                Console.WriteLine("Угол между центрами не равен 60 градусам.");
                 return;
-            }
+            }*/
             
             Vector3D membraneNormal = bubble2.Center - bubble1.Center;
             membraneNormal.Normalize();
@@ -235,7 +230,7 @@ namespace Bubbles
             // Устанавливаем направления сегментов
             // Устанавливаем направления для part1
             newPart1A.Direction = membraneNormal;
-            newPart1A.Direction.Normalize();
+            //newPart1A.Direction.Normalize();
             newPart1B.Direction = -newPart1A.Direction; // Направление должно быть противоположным
 
             // Устанавливаем направления для part2
@@ -272,7 +267,7 @@ namespace Bubbles
 
             return newSegment;
         }
-        public bool AreCoDirectional(Vector3D a, Vector3D b)
+        private bool AreCoDirectional(Vector3D a, Vector3D b)
         {
             // Проверяем, что оба вектора не равны нулю
             if (a.X == 0 && a.Y == 0 && a.Z == 0 || b.X == 0 && b.Y == 0 && b.Z == 0)
@@ -305,7 +300,7 @@ namespace Bubbles
             return height;
         }
 
-        public static List<Obj> PositionBubbles(Bubble b1, Bubble b2, bool from_combined/*, ref int what_happend*/)
+        public static List<Obj> PositionBubbles(Bubble b1, Bubble b2, bool from_combined)
         {
             double contactAngle = ContactAngle(b1, b2);
             List<Obj> res = new List<Obj>();
@@ -313,7 +308,6 @@ namespace Bubbles
                 return null;
             if (contactAngle < 55.0) // слияние в один большой пузырь
             {
-                //what_happend = 1;
                 Bubble res_b = MergeBubbles(b1, b2);
                 res.Add(res_b);
             }
@@ -326,15 +320,9 @@ namespace Bubbles
             else // образование кластера
             {
                 if (from_combined)
-                {
-                    /*MessageBox.Show(
-                    $"Угол равен {contactAngle}. Невозможно образование кластера из трёх пузырей.",
-                    "ERROR");*/
                     return null;
-                }
                 CombinedBubble cluster = new CombinedBubble(b1.Id, b1, b2);
                 cluster.CreateClusters();
-                //cluster.Bubble2.Id = cluster.Bubble1.Id; 
                 res.Add(cluster);
             }
             return res;
