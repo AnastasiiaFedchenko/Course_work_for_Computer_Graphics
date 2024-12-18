@@ -20,6 +20,7 @@
 \usepackage{flafter}
 \usepackage{enumitem}
 \usepackage{multirow}
+\usepackage{gensymb}
 
 \usepackage[figure,table]{totalcount}
 \usepackage{lastpage}
@@ -108,6 +109,24 @@
 	showtabs=false,                  
 	tabsize=2
 }
+\usepackage[russian]{babel} % Поддержка русского языка
+\usepackage{listings} % Пакет для вставки кода
+
+\lstset{ % Настройки для листинга
+	language=[Sharp]C, % Указываем язык C#
+	basicstyle=\ttfamily, % Шрифт для кода
+	commentstyle=\color{green!50!black}, % Цвет комментариев
+	keywordstyle=\color{blue}, % Цвет ключевых слов
+	stringstyle=\color{red}, % Цвет строк
+	numbers=left, % Нумерация строк слева
+	numberstyle=\tiny\color{gray}, % Стиль нумерации
+	stepnumber=1, % Номер строки через 1
+	numbersep=5pt, % Расстояние между номером строки и кодом
+	frame=single, % Рамка вокруг кода
+	captionpos=b, % Позиция заголовка (b - снизу)
+	breaklines=true % Перенос длинных строк
+}
+
 
 \lstset{style=mystyle}
 \pgfplotsset{width=0.85\linewidth, height=0.5\columnwidth}

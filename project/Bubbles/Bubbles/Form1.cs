@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Text;
@@ -35,7 +36,7 @@ namespace Bubbles
             W = Canvas.Width;
             H = Canvas.Height;
             ViewPoint = new Vector3D(0, 0, -4);
-            drawer = new Renderer(1, 1, ViewPoint, 1, W, H);
+            drawer = new Renderer(1, 1, ViewPoint, 3, W, H);
             contours = new List<Contour>();
 
             Canvas.Image = drawer.Canvas_Buffer;
@@ -48,7 +49,7 @@ namespace Bubbles
 
             List<Obj> res1 = CombinedBubble.PositionBubbles(bubble1, bubble2, false);
             for (int i = 0; i < res1.Count; i++)
-                if (res1[i] != null) 
+                if (res1[i] != null)
                     drawer.AddSphere(res1[i]);
 
             Bubble bubble3 = new Bubble(3, new Vector3D(2, -1, 3), 1, System.Drawing.Color.HotPink, 500, 0.4);
@@ -72,7 +73,6 @@ namespace Bubbles
             if (rc != -1)
                 drawer.Render();
             Canvas.Invalidate();
-            
         }
 
         private void bubbles_checked_list() 
@@ -307,7 +307,7 @@ namespace Bubbles
             for (int i = 0; i < count.Count; i++)
                 Console.Write($"{count[i]} ");
             Console.Write("\n");
-
+            
             return a;
         }
         private int position_two_bubbles(int i, int j, Bubble b1, Bubble b2)

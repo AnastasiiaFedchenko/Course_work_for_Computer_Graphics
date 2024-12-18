@@ -107,7 +107,7 @@ namespace Bubbles
         public void Render()
         {
             g.FillRectangle(new SolidBrush(Form1.DefaultBackColor),
-                0, 0, canvas_buffer.Width, canvas_buffer.Height);
+                    0, 0, canvas_buffer.Width, canvas_buffer.Height);
 
             int w = canvas_buffer.Width / 2;
             int h = canvas_buffer.Height / 2;
